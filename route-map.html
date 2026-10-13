@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Route Map">
+<meta name="theme-color" content="#14181d">
+<title>Route Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --bg:#14181d; --panel:#1d232b; --panel2:#262e38; --text:#eef1f4; --muted:#9aa6b2;
+    --accent:#3b9cff; --danger:#ff5a5a; --ok:#3ccf7a; --border:#33404d;
+    --curb:#3b9cff; --cbu:#f5a623; --door:#3ccf7a; --po:#b57bff; --other:#9aa6b2; --house:#f2f2f2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font:16px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;overflow:hidden}
+  #map{position:absolute;inset:0;z-index:1}
+  header{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;gap:6px;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;background:rgba(20,24,29,.92);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  #q{flex:1;min-width:0;height:42px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);
+    color:var(--text);padding:0 12px;font-size:16px}
+  .hbtn{width:42px;height:42px;flex:none;border-radius:10px;border:1px solid var(--border);background:var(--panel);
+    color:var(--text);font-size:19px;display:flex;align-items:center;justify-content:center;padding:0}
+  .hbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  #sheet{position:absolute;left:0;right:0;bottom:0;z-index:1000;max-height:60vh;overflow:auto;
+    background:var(--panel);border-top:1px solid var(--border);border-radius:16px 16px 0 0;
+    padding:10px 14px calc(env(safe-area-inset-bottom) + 14px);box-shadow:0 -6px 24px rgba(0,0,0,.4);
+    transition:transform .2s;-webkit-overflow-scrolling:touch}
+  #sheet.hidden{transform:translateY(110%)}
+  .grab{width:40px;height:5px;border-radius:3px;background:var(--border);margin:0 auto 8px}
+  .shead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .shead h3{margin:0;font-size:17px}
+  .x{background:none;border:none;color:var(--muted);font-size:24px;padding:4px 8px}
+  .ghead{position:sticky;top:-10px;background:var(--panel);font-size:12px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;border-bottom:1px solid var(--border);z-index:2}
+  .item{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border)}
+  .badge{min-width:38px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13px;color:#111;padding:0 6px;flex:none}
+  .itxt{flex:1;min-width:0}
+  .itxt .a{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .itxt .s{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tags{display:flex;flex-direction:column;gap:2px;align-items:flex-end;flex:none;font-size:11px}
+  .tag{padding:1px 6px;border-radius:6px;background:var(--panel2);color:var(--muted)}
+  .tag.ok{color:var(--ok)}
+  .tag.closed{color:var(--danger)}
+  .tag.biz{color:var(--cbu)}
+  .daypick{display:flex;gap:4px;flex-wrap:wrap}
+  .daypick label{margin:0;flex:1;min-width:38px;text-align:center;padding:9px 0;border-radius:8px;
+    background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600}
+  .daypick input{display:none}
+  .daypick label.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  input[type=time]{width:100%;border-radius:9px;border:1px solid var(--border);background:var(--panel);
+    color:var(--text);padding:9px;font-size:16px;font-family:inherit;min-height:42px}
+  .bizline{margin:4px 0 2px;font-size:14px}
+  .warn{color:var(--cbu);font-size:13px}
+  label{display:block;font-size:13px;color:var(--muted);margin:8px 0 3px}
+  input[type=text],select,textarea{width:100%;border-radius:9px;border:1px solid var(--border);
+    background:var(--panel2);color:var(--text);padding:10px;font-size:16px;font-family:inherit}
+  textarea{min-height:60px;resize:vertical}
+  .two{display:flex;gap:8px}.two>div{flex:1;min-width:0}
+  .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .row button{flex:1;min-width:28%}
+  button.b{min-height:44px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--text);
+    font-size:15px;font-weight:600;padding:0 10px}
+  button.sm{min-height:38px;font-size:14px}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+  .locbox{margin-top:12px;padding:10px;border-radius:10px;background:var(--panel2);border:1px solid var(--border)}
+  .locbox .t{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+  .locbox .c{font-size:13px;color:var(--muted);margin-top:3px}
+  .locbox .row{margin-top:8px}
+  .locbox button.b{background:var(--panel)}
+  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid #fff;flex:none}
+  .sq{width:14px;height:14px;border-radius:3px;display:inline-block;background:var(--house);border:2px solid #333;flex:none}
+  .hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+  .detail .a{font-size:19px;font-weight:700;margin:2px 0 2px}
+  .detail .n{font-size:15px;margin-bottom:6px}
+  .detail .notes{white-space:pre-wrap;background:var(--panel2);padding:10px;border-radius:9px;margin-top:8px}
+  .chk{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:15px;color:var(--text)}
+  .chk input{width:22px;height:22px}
+  #banner{position:absolute;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 66px);z-index:1001;
+    background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;display:none;
+    align-items:center;justify-content:space-between;font-weight:600}
+  #banner button{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;font-weight:600}
+  #toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 24px);
+    z-index:2000;background:#000d;color:#fff;padding:10px 14px;border-radius:10px;font-size:14px;
+    max-width:90vw;text-align:center;display:none}
+  .pin{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #fff;
+    font:700 10px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);width:30px;height:30px}
+  .hpin{display:flex;align-items:center;justify-content:center;border-radius:5px;border:2px solid #222;background:var(--house);
+    font:700 10px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);width:28px;height:28px}
+  .sel{outline:3px solid #ffd60a;outline-offset:2px}
+  .t-curb{background:var(--curb)} .t-cbu{background:var(--cbu)} .t-door{background:var(--door)}
+  .t-po{background:var(--po)} .t-other{background:var(--other)}
+  .leaflet-control-layers{background:var(--panel)!important;color:var(--text)!important;border-color:var(--border)!important}
+  .leaflet-top{top:calc(env(safe-area-inset-top) + 62px)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .stat{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<header>
+  <input id="q" type="search" placeholder="Search address, name, unit, seq #" autocomplete="off" autocorrect="off">
+  <button class="hbtn" id="btnList" title="List">☰</button>
+  <button class="hbtn" id="btnAdd" title="Add stop">＋</button>
+  <button class="hbtn" id="btnLocate" title="My location">◎</button>
+  <button class="hbtn" id="btnData" title="Data &amp; settings">⋯</button>
+</header>
+
+<div id="banner"><span id="bannerText">Tap the map to place the pin</span><button id="bannerCancel">Cancel</button></div>
+<div id="sheet" class="hidden"></div>
+<div id="toast"></div>
+<input type="file" id="fileIn" accept=".json,.csv,text/csv,application/json" style="display:none">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ================= constants & state ================= */
+const KEY = 'routeMap.stops.v2';
+const OLD_KEY = 'routeMap.stops.v1';
+const SKEY = 'routeMap.settings.v1';
+const TYPES = {
+  curb:  'Curbside box',
+  cbu:   'Cluster box (CBU)',
+  door:  'Door / porch slot',
+  po:    'Parcel locker',
+  other: 'Other'
+};
+const WHAT = { box: 'Mailbox', house: 'House / package drop' };
+
+let stops = [];
+let settings = { area: 'Fort Bragg, CA', showLine: false };
+let editing = null;          // working copy while the form is open
+let selectedId = null;
+let tapTarget = null;        // 'box' | 'house' while waiting for a map tap
+let sheetMode = null;        // 'list' | 'detail' | 'form' | 'data'
+let watchId = null, userDot = null, userAcc = null, firstFix = false;
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const okPt = p => !!p && typeof p.lat === 'number' && typeof p.lng === 'number' && isFinite(p.lat) && isFinite(p.lng);
+const mkPt = (lat, lng) => { lat = parseFloat(lat); lng = parseFloat(lng); return isFinite(lat) && isFinite(lng) ? { lat, lng } : null; };
+function seqNum(s){ const n = parseFloat(s.seq); return isNaN(n) ? Infinity : n; }
+function seqLabel(s){ return s.seq !== '' && s.seq != null ? String(s.seq) : '–'; }
+function sorted(arr){
+  return arr.slice().sort((a,b) => seqNum(a) - seqNum(b) || String(a.address).localeCompare(String(b.address), undefined, {numeric:true}));
+}
+function fullAddr(s){ return (s.address || '') + (s.unit ? ' ' + (/^\(/.test(s.unit) ? s.unit : '#' + s.unit) : ''); }
+function anyPt(s){ return okPt(s.box) ? s.box : (okPt(s.house) ? s.house : null); }
+let toastT;
+function toast(msg, ms){
+  const t = $('toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', ms || 2600);
+}
+function normType(v){
+  v = String(v || '').toLowerCase().trim();
+  if (TYPES[v]) return v;
+  if (/cbu|cluster|nbu/.test(v)) return 'cbu';
+  if (/curb|road|rural/.test(v)) return 'curb';
+  if (/door|porch|slot|wall/.test(v)) return 'door';
+  if (/locker|parcel/.test(v)) return 'po';
+  return v ? 'other' : 'curb';
+}
+function cleanStop(s){
+  return {
+    id: s.id ? String(s.id) : uid(),
+    seq: s.seq == null ? '' : String(s.seq).trim(),
+    group: String(s.group || '').trim(),
+    address: String(s.address || '').trim(),
+    unit: String(s.unit || '').trim(),
+    name: String(s.name || '').trim(),
+    type: normType(s.type),
+    notes: String(s.notes || '').trim(),
+    box: okPt(s.box) ? { lat: s.box.lat, lng: s.box.lng } : mkPt(s.box_lat != null ? s.box_lat : s.lat, s.box_lng != null ? s.box_lng : s.lng),
+    house: okPt(s.house) ? { lat: s.house.lat, lng: s.house.lng } : mkPt(s.house_lat, s.house_lng),
+    biz: cleanBiz(s.biz || { name: s.biz_name, days: s.biz_days, open: s.biz_open, close: s.biz_close, note: s.biz_note })
+  };
+}
+
+/* ================= business hours ================= */
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function parseDays(v){
+  if (Array.isArray(v)) return v.map(Number).filter(n => n >= 0 && n <= 6);
+  const out = new Set();
+  String(v || '').split(/[,\s]+/).filter(Boolean).forEach(tok => {
+    const r = tok.split('-').map(t => DAYS.findIndex(d => d.toLowerCase() === t.slice(0,3).toLowerCase()));
+    if (r.length === 2 && r[0] >= 0 && r[1] >= 0) { for (let i = r[0]; ; i = (i + 1) % 7) { out.add(i); if (i === r[1]) break; } }
+    else if (r[0] >= 0) out.add(r[0]);
+  });
+  return [...out].sort();
+}
+function cleanTime(t){ const m = String(t || '').trim().match(/^(\d{1,2}):?(\d{2})$/); return m && +m[1] < 24 && +m[2] < 60 ? String(m[1]).padStart(2,'0') + ':' + m[2] : ''; }
+function cleanBiz(b){
+  if (!b) return null;
+  const biz = { name: String(b.name || '').trim(), days: parseDays(b.days), open: cleanTime(b.open), close: cleanTime(b.close), note: String(b.note || '').trim() };
+  return biz.name || biz.days.length || biz.open || biz.close || biz.note ? biz : null;
+}
+function fmtTime(t){ if (!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12; return h + (m ? ':' + String(m).padStart(2,'0') : '') + ap; }
+function daysText(days){
+  if (!days.length) return '';
+  if (days.length === 7) return 'Every day';
+  const runs = []; let start = days[0], prev = days[0];
+  for (let i = 1; i <= days.length; i++) {
+    if (days[i] === prev + 1) { prev = days[i]; continue; }
+    runs.push(start === prev ? DAYS[start] : DAYS[start] + (prev - start > 1 ? '–' : ', ') + DAYS[prev]);
+    start = prev = days[i];
+  }
+  return runs.join(', ');
+}
+function hoursText(b){
+  if (!b) return '';
+  const parts = [];
+  if (b.days.length) parts.push(daysText(b.days));
+  if (b.open && b.close) parts.push(fmtTime(b.open) + '–' + fmtTime(b.close));
+  return parts.join(' ');
+}
+/* true = open now, false = closed now, null = hours not set */
+function openNow(b, d){
+  if (!b || !b.days.length || !b.open || !b.close) return null;
+  d = d || new Date();
+  const mins = d.getHours() * 60 + d.getMinutes();
+  const toM = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const o = toM(b.open), c = toM(b.close), day = d.getDay();
+  if (o < c) return b.days.includes(day) && mins >= o && mins < c;
+  // overnight hours (closes after midnight)
+  return (b.days.includes(day) && mins >= o) || (b.days.includes((day + 6) % 7) && mins < c);
+}
+function openBadge(b){
+  const st = openNow(b);
+  return st === null ? '' : st ? '<span class="tag ok">Open now</span>' : '<span class="tag closed">Closed now</span>';
+}
+
+/* ================= storage ================= */
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) stops = JSON.parse(raw).map(cleanStop);
+    else {
+      const old = localStorage.getItem(OLD_KEY);   // migrate from first version (single location = mailbox)
+      stops = old ? JSON.parse(old).map(cleanStop) : [];
+      if (old) save();
+    }
+  } catch(e){ stops = []; }
+  try { Object.assign(settings, JSON.parse(localStorage.getItem(SKEY)) || {}); } catch(e){}
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(stops)); }
+  catch(e){ toast('Could not save — storage unavailable. Export a backup.'); }
+}
+function saveSettings(){ try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch(e){} }
+
+/* ================= ordering ================= */
+function renumber(){
+  sorted(stops).forEach((s, i) => { s.seq = String(i + 1); });
+}
+/* Put stop `rec` at position n; every other stop at n or later moves back one. */
+function insertAt(rec, n){
+  stops.forEach(s => { if (s.id !== rec.id && seqNum(s) >= n) s.seq = String(seqNum(s) + 1); });
+  rec.seq = String(n);
+}
+
+/* ================= map ================= */
+const map = L.map('map', { zoomControl: false }).setView([39.4457, -123.8053], 12);
+const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagery &copy; Esri' });
+street.addTo(map);
+const boxLayer = L.layerGroup().addTo(map);
+const houseLayer = L.layerGroup().addTo(map);
+const linkLayer = L.layerGroup().addTo(map);
+L.control.layers({ 'Street': street, 'Satellite': sat },
+  { 'Mailboxes': boxLayer, 'Houses / packages': houseLayer, 'Box ↔ house links': linkLayer },
+  { position: 'topright' }).addTo(map);
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+let routeLine = null;
+const temp = { box: null, house: null };
+
+function boxIcon(s, sel){
+  return L.divIcon({ className: '', iconSize: [30,30], iconAnchor: [15,15],
+    html: `<div class="pin t-${normType(s.type)}${sel ? ' sel' : ''}">${esc(seqLabel(s))}</div>` });
+}
+function houseIcon(s, sel){
+  return L.divIcon({ className: '', iconSize: [28,28], iconAnchor: [14,14],
+    html: `<div class="hpin${sel ? ' sel' : ''}">${esc(seqLabel(s))}</div>` });
+}
+
+function renderMarkers(){
+  boxLayer.clearLayers(); houseLayer.clearLayers(); linkLayer.clearLayers();
+  stops.forEach(s => {
+    if (editing && editing.id === s.id) return;     // temp markers show it while editing
+    const sel = s.id === selectedId;
+    const click = () => { if (!tapTarget && !editing) showDetail(s.id); };
+    if (okPt(s.box)) L.marker([s.box.lat, s.box.lng], { icon: boxIcon(s, sel), zIndexOffset: sel ? 900 : 0 }).on('click', click).addTo(boxLayer);
+    if (okPt(s.house)) L.marker([s.house.lat, s.house.lng], { icon: houseIcon(s, sel), zIndexOffset: sel ? 900 : 0 }).on('click', click).addTo(houseLayer);
+    if (okPt(s.box) && okPt(s.house)) L.polyline([[s.box.lat, s.box.lng], [s.house.lat, s.house.lng]],
+      { color: sel ? '#ffd60a' : '#ffffff', weight: sel ? 3 : 1.5, opacity: .75, dashArray: '3 5', interactive: false }).addTo(linkLayer);
+  });
+  renderLine();
+}
+function renderLine(){
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  if (!settings.showLine) return;
+  const pts = sorted(stops.filter(s => anyPt(s) && isFinite(seqNum(s)))).map(s => { const p = anyPt(s); return [p.lat, p.lng]; });
+  if (pts.length > 1) routeLine = L.polyline(pts, { color: '#ffd60a', weight: 3, opacity: .7, interactive: false }).addTo(map);
+}
+function fitAll(){
+  const pts = [];
+  stops.forEach(s => { if (okPt(s.box)) pts.push([s.box.lat, s.box.lng]); if (okPt(s.house)) pts.push([s.house.lat, s.house.lng]); });
+  if (pts.length === 1) map.setView(pts[0], 17);
+  else if (pts.length > 1) map.fitBounds(pts, { padding: [40,40] });
+  else toast('Nothing placed on the map yet');
+}
+
+/* ================= sheet ================= */
+function openSheet(mode, html, keepScroll){
+  sheetMode = mode;
+  const sh = $('sheet');
+  const y = sh.scrollTop;
+  sh.innerHTML = '<div class="grab"></div>' + html;
+  sh.classList.remove('hidden');
+  sh.scrollTop = keepScroll ? y : 0;
+}
+function closeSheet(){
+  $('sheet').classList.add('hidden');
+  sheetMode = null;
+  if (selectedId) { selectedId = null; renderMarkers(); }
+}
+
+/* ----- list ----- */
+function matches(s, q){
+  if (!q) return true;
+  const hay = [seqLabel(s), s.group, s.address, s.unit, s.name, s.notes, TYPES[normType(s.type)],
+    s.biz ? 'business ' + s.biz.name + ' ' + s.biz.note : ''].join(' ').toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+let listCap = 300;
+function showList(keepScroll){
+  const q = $('q').value.trim();
+  const all = sorted(stops.filter(s => matches(s, q)));
+  const list = all.slice(0, listCap);
+  const nb = stops.filter(s => okPt(s.box)).length, nh = stops.filter(s => okPt(s.house)).length;
+  let html = `<div class="shead"><h3>${q ? all.length + ' match' + (all.length === 1 ? '' : 'es') : stops.length + ' stops'}</h3><button class="x" data-act="close">×</button></div>`;
+  if (!q && stops.length) html += `<div class="stat" style="margin-bottom:4px">${nb} mailboxes placed · ${nh} houses placed</div>`;
+  if (!stops.length) html += `<p class="stat">No stops yet. Tap <b>＋</b> to add one, or import your route CSV from the ⋯ menu.</p>`;
+  let lastGroup = null;
+  list.forEach(s => {
+    if (s.group !== lastGroup) { html += `<div class="ghead">${esc(s.group || 'No section')}</div>`; lastGroup = s.group; }
+    html += `
+    <div class="item" data-id="${esc(s.id)}">
+      <div class="badge t-${normType(s.type)}">${esc(seqLabel(s))}</div>
+      <div class="itxt"><div class="a">${esc(fullAddr(s)) || '<i>No address</i>'}</div>
+        <div class="s">${s.biz && s.biz.name ? '🏪 ' + esc(s.biz.name) + (s.name ? ' · ' + esc(s.name) : '') : (s.name ? esc(s.name) : '<i>no name</i>')}${s.notes ? ' · ' + esc(s.notes) : ''}</div></div>
+      <div class="tags">${openBadge(s.biz)}<span class="tag${okPt(s.box) ? ' ok' : ''}">${okPt(s.box) ? '✓' : '–'} box</span><span class="tag${okPt(s.house) ? ' ok' : ''}">${okPt(s.house) ? '✓' : '–'} house</span></div>
+    </div>`;
+  });
+  if (all.length > list.length) html += `<div class="row"><button class="b" data-act="more">Show ${Math.min(300, all.length - list.length)} more (${all.length - list.length} left)</button></div>`;
+  openSheet('list', html, keepScroll);
+}
+
+/* ----- detail ----- */
+function locRowDetail(s, what){
+  const p = s[what];
+  return `<div class="locbox"><div class="t">${what === 'box' ? `<span class="dot t-${normType(s.type)}"></span>` : '<span class="sq"></span>'}${WHAT[what]}</div>
+    <div class="c">${okPt(p) ? p.lat.toFixed(6) + ', ' + p.lng.toFixed(6) : '<span class="warn">Not placed yet</span>'}</div>
+    ${okPt(p) ? `<div class="row"><button class="b sm" data-act="go" data-what="${what}" data-id="${esc(s.id)}">Show on map</button></div>
+      <div class="row"><button class="b sm primary" data-act="nav" data-what="${what}" data-id="${esc(s.id)}">▶ Apple Maps</button><button class="b sm" data-act="gnav" data-what="${what}" data-id="${esc(s.id)}">▶ Google Maps</button></div>` : ''}
+  </div>`;
+}
+function showDetail(id){
+  const s = stops.find(x => x.id === id);
+  if (!s) return;
+  selectedId = id;
+  renderMarkers();
+  const p = anyPt(s);
+  if (p) map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 17), { duration: .6 });
+  const sameGroupNoBox = s.group && okPt(s.box) ? stops.filter(x => x.id !== s.id && x.group === s.group && !okPt(x.box)).length : 0;
+  const html = `
+    <div class="shead"><h3>#${esc(seqLabel(s))} · ${esc(s.group || 'No section')}</h3><button class="x" data-act="close">×</button></div>
+    <div class="detail">
+      <div class="a">${esc(fullAddr(s)) || '<i>No address</i>'}</div>
+      <div class="n">${s.name ? esc(s.name) : '<span class="stat">No name</span>'} · <span class="stat">${esc(TYPES[normType(s.type)])}</span></div>
+      ${s.biz ? `<div class="locbox"><div class="t">🏪 ${esc(s.biz.name || 'Business')} ${openBadge(s.biz)}</div>
+        <div class="bizline">${esc(hoursText(s.biz)) || '<span class="stat">Hours not set</span>'}</div>
+        ${s.biz.note ? `<div class="c">${esc(s.biz.note)}</div>` : ''}</div>` : ''}
+      ${s.notes ? `<div class="notes">${esc(s.notes)}</div>` : ''}
+      ${locRowDetail(s, 'box')}
+      ${locRowDetail(s, 'house')}
+    </div>
+    ${sameGroupNoBox ? `<div class="row"><button class="b" data-act="groupbox" data-id="${esc(s.id)}">Use this mailbox for ${sameGroupNoBox} other stop${sameGroupNoBox === 1 ? '' : 's'} in ${esc(s.group)}</button></div>` : ''}
+    <div class="row">
+      <button class="b primary" data-act="edit" data-id="${esc(s.id)}">Edit</button>
+      <button class="b" data-act="after" data-id="${esc(s.id)}">＋ Insert after</button>
+    </div>
+    <div class="row">
+      <button class="b" data-act="prev" data-id="${esc(s.id)}">◀ Prev stop</button>
+      <button class="b" data-act="next" data-id="${esc(s.id)}">Next stop ▶</button>
+    </div>
+    <div class="row"><button class="b" data-act="list">Back to list</button></div>`;
+  openSheet('detail', html);
+}
+function neighbor(id, dir){
+  const list = sorted(stops);
+  const i = list.findIndex(x => x.id === id);
+  return list[i + dir] || null;
+}
+
+/* ----- form ----- */
+function startForm(id, afterId){
+  const s = id ? stops.find(x => x.id === id) : null;
+  if (s) editing = Object.assign({}, s, { box: s.box ? Object.assign({}, s.box) : null, house: s.house ? Object.assign({}, s.house) : null, origSeq: s.seq });
+  else {
+    const after = afterId ? stops.find(x => x.id === afterId) : null;
+    const maxSeq = stops.reduce((m, x) => isFinite(seqNum(x)) ? Math.max(m, seqNum(x)) : m, 0);
+    editing = { id: null, seq: String(after && isFinite(seqNum(after)) ? Math.floor(seqNum(after)) + 1 : Math.floor(maxSeq) + 1),
+      group: after ? after.group : '', address: '', unit: '', name: '', type: after ? after.type : 'curb', notes: '',
+      box: after && normType(after.type) === 'cbu' && okPt(after.box) ? Object.assign({}, after.box) : null,
+      house: null, insertMode: !!after };
+  }
+  selectedId = null;
+  renderMarkers();
+  updateTemps();
+  showForm();
+}
+function locRowForm(what){
+  const p = editing[what];
+  const extra = what === 'box'
+    ? `<button class="b sm" data-act="sameprev">Same as prev stop</button>`
+    : `<button class="b sm" data-act="geo">Look up address</button>`;
+  return `<div class="locbox"><div class="t">${what === 'box' ? `<span class="dot t-${normType(editing.type)}"></span>` : '<span class="sq"></span>'}${WHAT[what]}</div>
+    <div class="c" id="loc-${what}">${okPt(p) ? p.lat.toFixed(6) + ', ' + p.lng.toFixed(6) + ' — drag pin to adjust' : '<span class="warn">Not placed</span>'}</div>
+    <div class="row">
+      <button class="b sm" data-act="gps" data-what="${what}">📍 GPS here</button>
+      <button class="b sm" data-act="tap" data-what="${what}">Tap map</button>
+      ${extra}
+      ${okPt(p) ? `<button class="b sm danger" data-act="clearloc" data-what="${what}">Clear</button>` : ''}
+    </div></div>`;
+}
+function showForm(){
+  const e = editing;
+  const opts = Object.keys(TYPES).map(k => `<option value="${k}"${normType(e.type) === k ? ' selected' : ''}>${TYPES[k]}</option>`).join('');
+  const groups = [...new Set(sorted(stops).map(s => s.group).filter(Boolean))];
+  const html = `
+    <div class="shead"><h3>${e.id ? 'Edit stop' : 'Add stop'}</h3><button class="x" data-act="cancel">×</button></div>
+    <div class="two">
+      <div><label for="f-seq">Seq # (order)</label><input id="f-seq" type="text" inputmode="decimal" value="${esc(e.seq)}"></div>
+      <div><label for="f-unit">Unit / box #</label><input id="f-unit" type="text" value="${esc(e.unit)}" placeholder="B, RV12…"></div>
+    </div>
+    <p class="hint">Typing a # that's already used inserts this stop there and moves later stops back one.</p>
+    <label for="f-addr">Physical address</label>
+    <input id="f-addr" type="text" value="${esc(e.address)}" placeholder="e.g. 18760 Cypress Rd" autocapitalize="words">
+    <label for="f-name">Name</label>
+    <input id="f-name" type="text" value="${esc(e.name)}" autocapitalize="words">
+    <label for="f-group">Section / street</label>
+    <input id="f-group" type="text" list="groups" value="${esc(e.group)}" autocapitalize="words">
+    <datalist id="groups">${groups.map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+    <label for="f-type">Mailbox type</label>
+    <select id="f-type">${opts}</select>
+    <label for="f-notes">Notes</label>
+    <textarea id="f-notes" placeholder="Dog, gate code, leave parcels at side door…">${esc(e.notes)}</textarea>
+    <label class="chk"><input type="checkbox" id="f-isbiz"${e.biz ? ' checked' : ''}> This is a business</label>
+    <div id="bizfields" style="display:${e.biz ? 'block' : 'none'}">
+      <label for="f-bname">Business name</label>
+      <input id="f-bname" type="text" value="${esc(e.biz ? e.biz.name : '')}" autocapitalize="words">
+      <label>Days open</label>
+      <div class="daypick">${DAYS.map((d, i) => { const on = e.biz && e.biz.days.includes(i); return `<label class="${on ? 'on' : ''}"><input type="checkbox" data-day="${i}"${on ? ' checked' : ''}>${d}</label>`; }).join('')}</div>
+      <div class="two" style="margin-top:4px">
+        <div><label for="f-open">Opens</label><input id="f-open" type="time" value="${esc(e.biz ? e.biz.open : '')}"></div>
+        <div><label for="f-close">Closes</label><input id="f-close" type="time" value="${esc(e.biz ? e.biz.close : '')}"></div>
+      </div>
+      <label for="f-bnote">Hours notes</label>
+      <input id="f-bnote" type="text" value="${esc(e.biz ? e.biz.note : '')}" placeholder="Closed for lunch 12–1, Sat 10–2…">
+    </div>
+    ${locRowForm('box')}
+    ${locRowForm('house')}
+    <div class="row">
+      <button class="b primary" data-act="save">Save</button>
+      <button class="b" data-act="cancel">Cancel</button>
+    </div>
+    ${e.id ? `<div class="row"><button class="b danger" data-act="del">Delete stop</button></div>` : ''}`;
+  openSheet('form', html, true);
+}
+function readForm(){
+  if (!editing || !$('f-seq')) return;
+  editing.seq = $('f-seq').value.trim();
+  editing.unit = $('f-unit').value.trim();
+  editing.address = $('f-addr').value.trim();
+  editing.name = $('f-name').value.trim();
+  editing.group = $('f-group').value.trim();
+  editing.type = $('f-type').value;
+  editing.notes = $('f-notes').value.trim();
+  if ($('f-isbiz').checked) {
+    editing.biz = {
+      name: $('f-bname').value.trim(),
+      days: [...document.querySelectorAll('.daypick input[data-day]')].filter(x => x.checked).map(x => +x.dataset.day),
+      open: $('f-open').value, close: $('f-close').value, note: $('f-bnote').value.trim()
+    };
+  } else editing.biz = null;
+}
+function setEditLoc(what, lat, lng){
+  readForm();
+  editing[what] = { lat, lng };
+  updateTemps();
+  showForm();
+}
+function updateTemps(){
+  ['box','house'].forEach(w => { if (temp[w]) { map.removeLayer(temp[w]); temp[w] = null; } });
+  if (!editing) return;
+  ['box','house'].forEach(w => {
+    if (!okPt(editing[w])) return;
+    const m = L.marker([editing[w].lat, editing[w].lng], { draggable: true, zIndexOffset: 1000,
+      icon: w === 'box' ? boxIcon(editing, true) : houseIcon(editing, true) }).addTo(map);
+    m.on('dragend', () => {
+      const p = m.getLatLng();
+      editing[w] = { lat: p.lat, lng: p.lng };
+      const el = $('loc-' + w); if (el) el.textContent = p.lat.toFixed(6) + ', ' + p.lng.toFixed(6) + ' — drag pin to adjust';
+    });
+    temp[w] = m;
+  });
+}
+function endForm(){
+  editing = null;
+  ['box','house'].forEach(w => { if (temp[w]) { map.removeLayer(temp[w]); temp[w] = null; } });
+  setTap(null);
+}
+function saveForm(){
+  readForm();
+  const e = editing;
+  if (!e.address && !e.name && !okPt(e.box) && !okPt(e.house)) { toast('Add an address, name or location first'); return; }
+  const rec = cleanStop(Object.assign({}, e, { id: e.id || uid() }));
+  const n = parseFloat(rec.seq);
+  const moved = e.id && String(e.origSeq) !== rec.seq;
+  const clash = isFinite(n) && stops.find(x => x.id !== rec.id && seqNum(x) === n);
+  if (clash) {
+    if (!e.insertMode && !confirm(`#${n} is already ${fullAddr(clash) || clash.name || 'another stop'}.\n\nOK = put this stop at #${n} and move later stops back one.\nCancel = go back and change the #.`)) return;
+    insertAt(rec, n);
+  }
+  const i = stops.findIndex(x => x.id === rec.id);
+  if (i >= 0) stops[i] = rec; else stops.push(rec);
+  if (moved && clash) renumber();       // close the gap the stop left behind
+  save();
+  endForm();
+  renderMarkers();
+  toast('Saved');
+  showDetail(rec.id);
+}
+
+function useGPS(what){
+  if (!navigator.geolocation) { toast('Location not available on this device'); return; }
+  toast('Getting GPS fix…', 8000);
+  navigator.geolocation.getCurrentPosition(p => {
+    setEditLoc(what, p.coords.latitude, p.coords.longitude);
+    map.flyTo([p.coords.latitude, p.coords.longitude], 18, { duration: .6 });
+    toast(`${WHAT[what]} placed (±${Math.round(p.coords.accuracy)} m). Drag to adjust if needed.`, 3500);
+  }, err => toast('GPS failed: ' + err.message, 3500), { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+}
+function samePrev(){
+  readForm();
+  const n = seqNum(editing);
+  const prev = sorted(stops.filter(s => s.id !== editing.id && okPt(s.box) && seqNum(s) < n)).pop();
+  if (!prev) { toast('No earlier stop has a mailbox placed'); return; }
+  setEditLoc('box', prev.box.lat, prev.box.lng);
+  map.flyTo([prev.box.lat, prev.box.lng], Math.max(map.getZoom(), 17), { duration: .6 });
+  toast(`Copied mailbox from #${seqLabel(prev)} ${fullAddr(prev)}`, 3000);
+}
+async function geocode(){
+  readForm();
+  const addr = editing.address.replace(/\?/g, '').trim();
+  if (!addr) { toast('Enter an address first'); return; }
+  toast('Looking up…', 8000);
+  const q = addr + (settings.area ? ', ' + settings.area : '');
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if (!j.length) { toast('No match found. Use GPS or tap the map.', 3500); return; }
+    setEditLoc('house', parseFloat(j[0].lat), parseFloat(j[0].lon));
+    map.flyTo([editing.house.lat, editing.house.lng], 17, { duration: .6 });
+    toast('Approximate — rural lookups are often off. Check satellite view and drag to the house.', 5000);
+  } catch(e) { toast('Lookup failed (offline?). Use GPS or tap the map.', 3500); }
+}
+
+function setTap(what){
+  tapTarget = what;
+  $('banner').style.display = what ? 'flex' : 'none';
+  if (what) { $('bannerText').textContent = 'Tap the map to place the ' + (what === 'box' ? 'mailbox' : 'house'); $('sheet').classList.add('hidden'); }
+  else if (sheetMode) $('sheet').classList.remove('hidden');
+}
+map.on('click', e => {
+  if (!tapTarget || !editing) return;
+  const w = tapTarget;
+  setTap(null);
+  setEditLoc(w, e.latlng.lat, e.latlng.lng);
+});
+
+/* ----- data / settings ----- */
+function showData(){
+  const nb = stops.filter(s => okPt(s.box)).length, nh = stops.filter(s => okPt(s.house)).length;
+  const html = `
+    <div class="shead"><h3>Data &amp; settings</h3><button class="x" data-act="close">×</button></div>
+    <div class="stat">${stops.length} stops · ${nb} mailboxes placed · ${nh} houses placed</div>
+    <label for="s-area">Area added to address lookups</label>
+    <input id="s-area" type="text" value="${esc(settings.area)}">
+    <label class="chk"><input type="checkbox" id="s-line"${settings.showLine ? ' checked' : ''}> Show line of travel (by seq #)</label>
+    <div class="legend">${Object.keys(TYPES).map(k => `<span><i class="t-${k}"></i>${TYPES[k]}</span>`).join('')}<span><span class="sq"></span>House / package drop</span></div>
+    <p class="hint">Use the layers button (top right of map) to show only mailboxes or only houses.</p>
+    <div class="row"><button class="b" data-act="fit">Zoom to all</button><button class="b" data-act="renum">Renumber 1…${stops.length}</button></div>
+    <div class="row"><button class="b" data-act="expjson">Backup (JSON)</button><button class="b" data-act="expcsv">Export CSV</button></div>
+    <div class="row"><button class="b" data-act="import">Import JSON / CSV</button></div>
+    <p class="hint">CSV columns: seq, group, address, unit, name, type, notes, box_lat, box_lng, house_lat, house_lng, biz_name, biz_days (e.g. "Mon Tue Wed" or "Mon-Fri"), biz_open, biz_close (24-hr, e.g. 09:00), biz_note. Only address or a location is required.</p>
+    <p class="hint">Data is stored only on this device. Back up after each day of placing pins.</p>
+    <div class="row"><button class="b danger" data-act="wipe">Delete all stops</button></div>`;
+  openSheet('data', html);
+}
+
+async function deliver(name, text, mime){
+  const blob = new Blob([text], { type: mime });
+  try {
+    const file = new File([blob], name, { type: mime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+  } catch(e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function stamp(){ return new Date().toISOString().slice(0,10); }
+function csvCell(v){ v = v == null ? '' : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+const COLS = ['seq','group','address','unit','name','type','notes','box_lat','box_lng','house_lat','house_lng','biz_name','biz_days','biz_open','biz_close','biz_note'];
+function toCSV(){
+  const rows = [COLS];
+  sorted(stops).forEach(s => rows.push([s.seq, s.group, s.address, s.unit, s.name, s.type, s.notes,
+    okPt(s.box) ? s.box.lat : '', okPt(s.box) ? s.box.lng : '', okPt(s.house) ? s.house.lat : '', okPt(s.house) ? s.house.lng : '',
+    s.biz ? s.biz.name : '', s.biz ? s.biz.days.map(d => DAYS[d]).join(' ') : '', s.biz ? s.biz.open : '', s.biz ? s.biz.close : '', s.biz ? s.biz.note : '']));
+  return rows.map(r => r.map(csvCell).join(',')).join('\n');
+}
+function parseCSV(t){
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i+1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+    else if (c !== '\r') f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ''));
+}
+function fromCSV(text){
+  const rows = parseCSV(text.replace(/^﻿/, ''));
+  if (rows.length < 2) throw new Error('No data rows');
+  const h = rows[0].map(x => x.trim().toLowerCase());
+  const col = names => h.findIndex(x => names.includes(x));
+  const ci = {
+    seq: col(['seq','seq #','seq#','sequence','order','#']),
+    group: col(['group','section','street']),
+    address: col(['address','addr','physical address','delivery address']),
+    unit: col(['unit','apt','space','box #','box#']),
+    name: col(['name','names','customer']),
+    type: col(['type','box type','mailbox type']),
+    notes: col(['notes','note','comments']),
+    box_lat: col(['box_lat','lat','latitude']), box_lng: col(['box_lng','lng','lon','long','longitude']),
+    house_lat: col(['house_lat']), house_lng: col(['house_lng','house_lon']),
+    biz_name: col(['biz_name','business','business name']), biz_days: col(['biz_days','days']),
+    biz_open: col(['biz_open','open','opens']), biz_close: col(['biz_close','close','closes']), biz_note: col(['biz_note','hours note','hours'])
+  };
+  if (ci.address < 0 && ci.name < 0 && ci.box_lat < 0 && ci.house_lat < 0) throw new Error('Need an "address" column (or name / location columns)');
+  const g = (r, i) => i >= 0 && r[i] != null ? r[i].trim() : '';
+  return rows.slice(1).map(r => cleanStop({ seq: g(r, ci.seq), group: g(r, ci.group), address: g(r, ci.address), unit: g(r, ci.unit),
+    name: g(r, ci.name), type: g(r, ci.type), notes: g(r, ci.notes),
+    box_lat: g(r, ci.box_lat), box_lng: g(r, ci.box_lng), house_lat: g(r, ci.house_lat), house_lng: g(r, ci.house_lng),
+    biz_name: g(r, ci.biz_name), biz_days: g(r, ci.biz_days), biz_open: g(r, ci.biz_open), biz_close: g(r, ci.biz_close), biz_note: g(r, ci.biz_note) }));
+}
+$('fileIn').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; ev.target.value = '';
+  if (!f) return;
+  try {
+    const text = await f.text();
+    let incoming;
+    if (/\.json$/i.test(f.name) || /^\s*[\[{]/.test(text)) {
+      const j = JSON.parse(text);
+      const arr = Array.isArray(j) ? j : j.stops;
+      if (!Array.isArray(arr)) throw new Error('Expected a list of stops');
+      incoming = arr.map(cleanStop);
+    } else incoming = fromCSV(text);
+    if (!incoming.length) { toast('Nothing to import'); return; }
+    if (stops.length && confirm(`Import ${incoming.length} stops.\n\nOK = REPLACE the ${stops.length} existing stops\nCancel = ADD to existing`)) stops = incoming;
+    else {
+      const ids = new Set(stops.map(s => s.id));
+      incoming.forEach(s => { if (ids.has(s.id)) s.id = uid(); });
+      stops = stops.concat(incoming);
+    }
+    save(); renderMarkers();
+    toast(`Imported ${incoming.length} stops`);
+    showData();
+  } catch(e) { toast('Import failed: ' + e.message, 4000); }
+});
+
+/* ================= my location ================= */
+function toggleLocate(){
+  const btn = $('btnLocate');
+  if (watchId != null) {
+    navigator.geolocation.clearWatch(watchId); watchId = null;
+    if (userDot) { map.removeLayer(userDot); map.removeLayer(userAcc); userDot = userAcc = null; }
+    btn.classList.remove('on');
+    return;
+  }
+  if (!navigator.geolocation) { toast('Location not available'); return; }
+  btn.classList.add('on'); firstFix = true;
+  watchId = navigator.geolocation.watchPosition(p => {
+    const ll = [p.coords.latitude, p.coords.longitude];
+    if (!userDot) {
+      userAcc = L.circle(ll, { radius: p.coords.accuracy, color: '#3b9cff', weight: 1, fillOpacity: .12, interactive: false }).addTo(map);
+      userDot = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#3b9cff', fillOpacity: 1, interactive: false }).addTo(map);
+    } else { userDot.setLatLng(ll); userAcc.setLatLng(ll).setRadius(p.coords.accuracy); }
+    if (firstFix) { map.flyTo(ll, 17, { duration: .6 }); firstFix = false; }
+  }, err => { toast('Location error: ' + err.message, 3500); toggleLocate(); },
+  { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+}
+
+/* ================= events ================= */
+$('sheet').addEventListener('click', ev => {
+  const item = ev.target.closest('.item');
+  if (item) { showDetail(item.dataset.id); return; }
+  const b = ev.target.closest('[data-act]');
+  if (!b) return;
+  const id = b.dataset.id, what = b.dataset.what;
+  const s = id ? stops.find(x => x.id === id) : null;
+  switch (b.dataset.act) {
+    case 'close': closeSheet(); break;
+    case 'list': selectedId = null; renderMarkers(); showList(); break;
+    case 'more': listCap += 300; showList(true); break;
+    case 'edit': startForm(id); break;
+    case 'after': startForm(null, id); break;
+    case 'prev': case 'next': { const n = neighbor(id, b.dataset.act === 'next' ? 1 : -1); if (n) showDetail(n.id); else toast('End of route'); break; }
+    case 'go': if (s && okPt(s[what])) map.flyTo([s[what].lat, s[what].lng], 18, { duration: .6 }); break;
+    case 'nav': if (s && okPt(s[what])) window.location.href = `https://maps.apple.com/?daddr=${s[what].lat},${s[what].lng}&dirflg=d`; break;
+    case 'gnav': if (s && okPt(s[what])) window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${s[what].lat},${s[what].lng}&travelmode=driving`; break;
+    case 'groupbox': {
+      const others = stops.filter(x => x.id !== s.id && x.group === s.group && !okPt(x.box));
+      if (!confirm(`Put the mailbox for ${others.length} stop${others.length === 1 ? '' : 's'} in "${s.group}" at this stop's mailbox location?\n\n(Stops that already have a mailbox placed are left alone.)`)) break;
+      others.forEach(x => { x.box = { lat: s.box.lat, lng: s.box.lng }; });
+      save(); renderMarkers(); toast(`Set ${others.length} mailboxes`); showDetail(s.id); break;
+    }
+    case 'gps': readForm(); useGPS(what); break;
+    case 'tap': readForm(); setTap(what); break;
+    case 'sameprev': samePrev(); break;
+    case 'geo': geocode(); break;
+    case 'clearloc': readForm(); editing[what] = null; updateTemps(); showForm(); break;
+    case 'save': saveForm(); break;
+    case 'cancel': { const back = editing && editing.id; endForm(); renderMarkers(); back ? showDetail(back) : closeSheet(); break; }
+    case 'del': {
+      if (!confirm('Delete this stop?')) break;
+      stops = stops.filter(x => x.id !== editing.id); save();
+      endForm(); renderMarkers(); toast('Deleted'); showList(); break;
+    }
+    case 'fit': fitAll(); break;
+    case 'renum':
+      if (confirm(`Renumber all ${stops.length} stops 1…${stops.length} in their current order? This clears decimals and gaps.`)) { renumber(); save(); renderMarkers(); toast('Renumbered'); showData(); }
+      break;
+    case 'expjson': deliver(`route-backup-${stamp()}.json`, JSON.stringify({ version: 2, exported: new Date().toISOString(), stops }, null, 2), 'application/json'); break;
+    case 'expcsv': deliver(`route-${stamp()}.csv`, toCSV(), 'text/csv'); break;
+    case 'import': $('fileIn').click(); break;
+    case 'wipe':
+      if (stops.length && confirm(`Delete all ${stops.length} stops?`) && confirm('Are you sure? This cannot be undone unless you have a backup.')) {
+        stops = []; save(); renderMarkers(); showData(); toast('All stops deleted');
+      }
+      break;
+  }
+});
+$('sheet').addEventListener('change', ev => {
+  if (ev.target.id === 's-line') { settings.showLine = ev.target.checked; saveSettings(); renderLine(); }
+  if (ev.target.id === 'f-type' && editing) { readForm(); updateTemps(); }
+  if (ev.target.id === 'f-isbiz') $('bizfields').style.display = ev.target.checked ? 'block' : 'none';
+  if (ev.target.dataset && ev.target.dataset.day != null) ev.target.parentNode.classList.toggle('on', ev.target.checked);
+});
+$('sheet').addEventListener('input', ev => {
+  if (ev.target.id === 's-area') { settings.area = ev.target.value; saveSettings(); }
+  if (ev.target.id === 'f-seq' && editing) { readForm(); updateTemps(); }
+});
+
+let qT;
+$('q').addEventListener('input', () => {
+  clearTimeout(qT);
+  qT = setTimeout(() => { if (editing) return; listCap = 300; showList(); }, 200);
+});
+$('q').addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter') return;
+  ev.preventDefault(); $('q').blur();
+  if (editing) return;
+  const q = $('q').value.trim();
+  const hits = sorted(stops.filter(s => matches(s, q)));
+  if (hits.length === 1) showDetail(hits[0].id);
+  else {
+    const pts = hits.map(anyPt).filter(Boolean).map(p => [p.lat, p.lng]);
+    if (pts.length > 1) map.fitBounds(pts, { padding: [50,50], maxZoom: 17 });
+  }
+});
+$('btnList').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'list' ? closeSheet() : (listCap = 300, showList()); });
+$('btnAdd').addEventListener('click', () => { if (editing) return; startForm(null); });
+$('btnLocate').addEventListener('click', toggleLocate);
+$('btnData').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'data' ? closeSheet() : showData(); });
+$('bannerCancel').addEventListener('click', () => setTap(null));
+
+/* ================= offline support ================= */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+window.addEventListener('offline', () => toast('No reception — your stops and GPS still work. Only map areas you\'ve viewed before will show.', 5000));
+window.addEventListener('online', () => toast('Back online'));
+
+/* ================= init ================= */
+load();
+renderMarkers();
+if (stops.some(anyPt)) fitAll();
+})();
+</script>
+</body>
+</html>
