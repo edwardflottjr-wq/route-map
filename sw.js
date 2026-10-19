@@ -3,7 +3,7 @@
    and keeps a copy of every map tile you have viewed so those areas still show offline.
    Tiles are only cached as you view them (no bulk downloading — OpenStreetMap's and
    Esri's tile terms don't allow bulk pre-downloading). */
-const APP_CACHE = 'routemap-app-v3';
+const APP_CACHE = 'routemap-app-v4';
 const TILE_CACHE = 'routemap-tiles-v1';
 const MAX_TILES = 6000;   // roughly 100–150 MB at most; oldest tiles are dropped first
 

@@ -25,9 +25,15 @@
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
   #q{flex:1;min-width:0;height:42px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);
     color:var(--text);padding:0 12px;font-size:16px}
-  .hbtn{width:42px;height:42px;flex:none;border-radius:10px;border:1px solid var(--border);background:var(--panel);
+  .hbtn{width:40px;height:42px;flex:none;border-radius:10px;border:1px solid var(--border);background:var(--panel);
     color:var(--text);font-size:19px;display:flex;align-items:center;justify-content:center;padding:0}
   .hbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .hcount{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--cbu);color:#111;
+    font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px}
+  .pkflag{position:absolute;top:-11px;right:-9px;font-size:14px;line-height:1;filter:drop-shadow(0 1px 1px #000)}
+  .pin,.hpin{position:relative}
+  .pin.pk,.hpin.pk{box-shadow:0 0 0 3px #f5a623,0 1px 4px rgba(0,0,0,.5)}
+  .nv-pk{margin-top:8px;padding:9px 10px;border-radius:9px;background:#f5a623;color:#111;font-weight:800;font-size:16px}
   #sheet{position:absolute;left:0;right:0;bottom:0;z-index:1000;max-height:60vh;overflow:auto;
     background:var(--panel);border-top:1px solid var(--border);border-radius:16px 16px 0 0;
     padding:10px 14px calc(env(safe-area-inset-bottom) + 14px);box-shadow:0 -6px 24px rgba(0,0,0,.4);
@@ -40,6 +46,7 @@
   .ghead{position:sticky;top:-10px;background:var(--panel);font-size:12px;font-weight:700;letter-spacing:.04em;
     text-transform:uppercase;color:var(--muted);padding:10px 4px 4px;border-bottom:1px solid var(--border);z-index:2}
   .item{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border)}
+  .item.last{background:rgba(59,156,255,.16);box-shadow:inset 3px 0 0 var(--accent)}
   .badge{min-width:38px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
     font-weight:700;font-size:13px;color:#111;padding:0 6px;flex:none}
   .itxt{flex:1;min-width:0}
@@ -49,7 +56,6 @@
   .tag{padding:1px 6px;border-radius:6px;background:var(--panel2);color:var(--muted)}
   .tag.ok{color:var(--ok)}
   .tag.closed{color:var(--danger)}
-  .tag.biz{color:var(--cbu)}
   .daypick{display:flex;gap:4px;flex-wrap:wrap}
   .daypick label{margin:0;flex:1;min-width:38px;text-align:center;padding:9px 0;border-radius:8px;
     background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600}
@@ -76,6 +82,7 @@
   .locbox .c{font-size:13px;color:var(--muted);margin-top:3px}
   .locbox .row{margin-top:8px}
   .locbox button.b{background:var(--panel)}
+  .locbox input[type=text],.locbox select{background:var(--panel)}
   .dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid #fff;flex:none}
   .sq{width:14px;height:14px;border-radius:3px;display:inline-block;background:var(--house);border:2px solid #333;flex:none}
   .hint{color:var(--muted);font-size:13px;margin:6px 0 0}
@@ -91,11 +98,28 @@
   #toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 24px);
     z-index:2000;background:#000d;color:#fff;padding:10px 14px;border-radius:10px;font-size:14px;
     max-width:90vw;text-align:center;display:none}
-  .pin{display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #fff;
-    font:700 10px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);width:30px;height:30px}
+  .pinwrap{width:120px;height:30px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .pin,.hpin{pointer-events:auto}
+  .pin{display:flex;align-items:center;justify-content:center;border-radius:15px;border:2px solid #fff;
+    font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);min-width:30px;height:30px;padding:0 5px;white-space:nowrap}
   .hpin{display:flex;align-items:center;justify-content:center;border-radius:5px;border:2px solid #222;background:var(--house);
-    font:700 10px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);width:28px;height:28px}
+    font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);min-width:28px;height:28px;padding:0 5px;white-space:nowrap}
+  .hpin .hs{color:#666;font-weight:600;margin-right:3px}
   .sel{outline:3px solid #ffd60a;outline-offset:2px}
+  .pin.done,.hpin.done{opacity:.35;filter:grayscale(1)}
+  .hpin.approx{border-style:dashed;border-color:#f5a623;background:#fff6e0}
+  .item.done .itxt,.item.done .badge{opacity:.45;filter:grayscale(1)}
+  .item.done .itxt .a::after{content:' ✓';color:var(--ok)}
+  /* vehicle check */
+  .ck{padding:10px 0;border-bottom:1px solid var(--border)}
+  .ck .nm{font-weight:600;margin-bottom:6px}
+  .ck .st{display:flex;gap:6px}
+  .ck .st button{flex:1;min-height:40px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-weight:700;font-size:14px}
+  .ck .st button.on-ok{background:#1e5a36;border-color:var(--ok);color:#fff}
+  .ck .st button.on-prob{background:#6a2222;border-color:var(--danger);color:#fff}
+  .ck .st button.on-na{background:#3a4450;border-color:var(--muted);color:#fff}
+  .ck .pb{margin-top:8px}
+  .nv-btns button.pkg-on{background:#7a4a00;border-color:var(--cbu);color:#fff}
   .t-curb{background:var(--curb)} .t-cbu{background:var(--cbu)} .t-door{background:var(--door)}
   .t-po{background:var(--po)} .t-other{background:var(--other)}
   .leaflet-control-layers{background:var(--panel)!important;color:var(--text)!important;border-color:var(--border)!important}
@@ -104,6 +128,55 @@
   .legend span{display:inline-flex;align-items:center;gap:5px}
   .legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
   .stat{color:var(--muted);font-size:14px}
+
+  /* space number labels (RV spaces etc.) */
+  .spl{position:absolute;transform:translate(-50%,-50%);font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;
+    background:rgba(255,255,255,.88);border:1px solid #555;border-radius:4px;padding:2px 4px;white-space:nowrap}
+  .lowz:not(.labeling) .spl{display:none}
+  .labeling .spl{background:#ffd60a;border-color:#111}
+  #labelbar{position:absolute;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 66px);z-index:1001;display:none;
+    background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+  #labelbar .lr{display:flex;gap:6px}
+  #labelbar input{flex:1;min-width:0}
+  #labelbar button{min-height:42px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-weight:600;padding:0 12px}
+  #labelbar button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* photos */
+  .thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .thw{position:relative}
+  .thumb{width:72px;height:72px;object-fit:cover;border-radius:8px;background:var(--panel);display:block;border:1px solid var(--border)}
+  .thx{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:none;background:var(--danger);color:#fff;font-weight:700;font-size:12px}
+  #viewer{position:fixed;inset:0;z-index:3000;background:#000;display:none;flex-direction:column}
+  #viewer img{flex:1;min-height:0;width:100%;object-fit:contain}
+  .vw-bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px calc(env(safe-area-inset-bottom) + 12px)}
+  .vw-bar button{min-width:56px;min-height:44px;border-radius:10px;border:1px solid #444;background:#222;color:#fff;font-size:18px}
+  .vw-bar span{color:#ccc}
+
+  /* route guidance panel */
+  #navbar{position:absolute;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:999;display:none;
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:0 -4px 20px rgba(0,0,0,.5)}
+  .nv-top{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .nv-main{display:flex;align-items:center;gap:10px}
+  .nv-arrow{width:48px;height:48px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--panel2)}
+  .nv-arrow svg{transition:transform .4s}
+  .nv-txt{flex:1;min-width:0}
+  .nv-addr{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nv-sub{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nv-dist{font-size:20px;font-weight:800;flex:none;text-align:right}
+  .nv-turn{margin-top:8px;padding:8px 10px;border-radius:9px;background:var(--panel2);font-weight:600;font-size:15px}
+  .nv-paused{margin-top:8px;padding:8px 10px;border-radius:9px;background:#5a4300;color:#ffd60a;font-weight:700;text-align:center}
+  .nv-btns{display:flex;gap:6px;margin-top:8px}
+  .nv-btns button{flex:1;min-height:46px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-size:17px;font-weight:700;padding:0}
+  .nv-btns button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .nv-btns button.off{opacity:.45}
+
+  /* times */
+  table.tt{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  table.tt th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;padding:4px 4px;border-bottom:1px solid var(--border)}
+  table.tt td{padding:6px 4px;border-bottom:1px solid var(--border);vertical-align:top}
+  table.tt td.r,table.tt th.r{text-align:right;white-space:nowrap}
+  .faster{color:var(--ok)} .slower{color:var(--danger)}
+  .big{font-size:26px;font-weight:800}
 </style>
 </head>
 <body>
@@ -111,6 +184,7 @@
 
 <header>
   <input id="q" type="search" placeholder="Search address, name, unit, seq #" autocomplete="off" autocorrect="off">
+  <button class="hbtn" id="btnPkg" title="Today's packages" style="position:relative">📦<span id="pkgCount" class="hcount"></span></button>
   <button class="hbtn" id="btnList" title="List">☰</button>
   <button class="hbtn" id="btnAdd" title="Add stop">＋</button>
   <button class="hbtn" id="btnLocate" title="My location">◎</button>
@@ -118,9 +192,20 @@
 </header>
 
 <div id="banner"><span id="bannerText">Tap the map to place the pin</span><button id="bannerCancel">Cancel</button></div>
+<div id="labelbar">
+  <div class="lr">
+    <input id="lb-text" type="text" value="RV1" autocapitalize="characters" autocorrect="off" aria-label="Next label">
+    <button data-lb="undo">Undo</button>
+    <button class="primary" data-lb="done">Done</button>
+  </div>
+  <p class="hint">Tap the map to drop this label. The number goes up by one each time. Tap a yellow label to rename or delete it; drag to move it.</p>
+</div>
+<div id="navbar"></div>
 <div id="sheet" class="hidden"></div>
 <div id="toast"></div>
+<div id="viewer"><img id="vw-img" alt="Stop photo"><div class="vw-bar"><button data-vw="prev">◀</button><span id="vw-n"></span><button data-vw="next">▶</button><button data-vw="close">✕</button></div></div>
 <input type="file" id="fileIn" accept=".json,.csv,text/csv,application/json" style="display:none">
+<input type="file" id="photoIn" accept="image/*" multiple style="display:none">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -131,6 +216,8 @@
 const KEY = 'routeMap.stops.v2';
 const OLD_KEY = 'routeMap.stops.v1';
 const SKEY = 'routeMap.settings.v1';
+const SPKEY = 'routeMap.spaces.v1';
+const RKEY = 'routeMap.runs.v1';
 const TYPES = {
   curb:  'Curbside box',
   cbu:   'Cluster box (CBU)',
@@ -141,11 +228,15 @@ const TYPES = {
 const WHAT = { box: 'Mailbox', house: 'House / package drop' };
 
 let stops = [];
-let settings = { area: 'Fort Bragg, CA', showLine: false };
+let spaces = [];
+let runs = [];
+let settings = { area: 'Fort Bragg, CA', showLine: false, labels: 'mixed', lastId: null,
+  navTo: 'auto', arriveFt: 80, navVoice: true, navNames: false, navTurns: false, navPos: null };
 let editing = null;          // working copy while the form is open
 let selectedId = null;
 let tapTarget = null;        // 'box' | 'house' while waiting for a map tap
-let sheetMode = null;        // 'list' | 'detail' | 'form' | 'data'
+let labelMode = false;       // dropping space labels
+let sheetMode = null;        // 'list' | 'detail' | 'form' | 'data' | 'times'
 let watchId = null, userDot = null, userAcc = null, firstFix = false;
 
 /* ================= helpers ================= */
@@ -187,9 +278,116 @@ function cleanStop(s){
     notes: String(s.notes || '').trim(),
     box: okPt(s.box) ? { lat: s.box.lat, lng: s.box.lng } : mkPt(s.box_lat != null ? s.box_lat : s.lat, s.box_lng != null ? s.box_lng : s.lng),
     house: okPt(s.house) ? { lat: s.house.lat, lng: s.house.lng } : mkPt(s.house_lat, s.house_lng),
-    biz: cleanBiz(s.biz || { name: s.biz_name, days: s.biz_days, open: s.biz_open, close: s.biz_close, note: s.biz_note })
+    biz: cleanBiz(s.biz || { name: s.biz_name, days: s.biz_days, open: s.biz_open, close: s.biz_close, note: s.biz_note }),
+    photos: Array.isArray(s.photos) ? s.photos.map(String) : [],
+    houseApprox: !!s.houseApprox && !!(s.house || s.house_lat),
+    pkgManual: Math.max(0, parseInt(s.pkgManual, 10) || 0)
   };
 }
+
+/* ================= today's packages (from packing-slip addresses) ================= */
+function todayStr(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function todayPkgs(){
+  const t = settings.pkgToday;
+  return t && t.date === todayStr() && Array.isArray(t.ids) ? t.ids : [];
+}
+function setTodayPkgs(ids){ settings.pkgToday = { date: todayStr(), ids: [...new Set(ids)] }; saveSettings(); }
+function hasPkgToday(id){ return todayPkgs().includes(id); }
+const ROADW = { hwy:'highway', rd:'road', ln:'lane', dr:'drive', ct:'court', st:'street', ave:'avenue', wy:'way', n:'north', s:'south', e:'east', w:'west', blvd:'boulevard', pl:'place' };
+const SKIPW = new Set(['fort','bragg','ca','california','usa','us','apt','unit','space','the']);
+function normWords(str){
+  return String(str).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean).map(w => ROADW[w] || w).filter(w => !SKIPW.has(w) && !/^\d+$/.test(w));
+}
+/* Find route stops matching one line of a packing-slip address. */
+function matchAddress(line){
+  if (/\b[A-Z]{2}\s+\d{5}(-\d{4})?\b/i.test(line) && !/^\s*\d{3,6}\s+[A-Za-z]/.test(line)) return null;   // city/state/ZIP line
+  const m = line.match(/\b(\d{3,6})(?:\s*1\/2)?\s+([A-Za-z].*)$/);
+  if (!m) return null;
+  const num = m[1], words = normWords(m[2]);
+  let cands = stops.filter(s => (String(s.address).match(/^\s*(\d+)/) || [])[1] === num);
+  if (cands.length > 1 && words.length) {
+    const sc = cands.map(s => { const have = new Set(normWords(s.address + ' ' + s.group)); return { s, n: words.filter(w => have.has(w)).length }; });
+    const best = Math.max(...sc.map(x => x.n));
+    if (best > 0) cands = sc.filter(x => x.n === best).map(x => x.s);
+  }
+  const um = line.match(/\b(?:apt|unit|space|sp|#)\s*([A-Za-z]*\d+[A-Za-z]?)\b/i) || line.match(/\b(RV\d+|MS\d+[A-Z]?|C\d+|P\d+)\b/i);
+  if (um && cands.length > 1) { const u = um[1].toLowerCase(); const hit = cands.filter(s => s.unit.toLowerCase().replace(/[()#\s]/g, '') === u); if (hit.length) cands = hit; }
+  return { line: line.trim(), num, cands: sorted(cands) };
+}
+let pkgResults = [];
+function showPkgToday(){
+  const ids = todayPkgs();
+  const list = sorted(stops.filter(s => ids.includes(s.id)));
+  let html = `<div class="shead"><h3>📦 Today's packages (${list.length})</h3><button class="x" data-act="close">×</button></div>
+    <p class="hint">Tap the box below, then tap it again and choose <b>Scan Text</b> to read the address straight off the packing slip with your camera. Or type the house number and street. One address per line is fine; you can add several at once.</p>
+    <textarea id="pk-in" placeholder="18760 Cypress Rd" style="min-height:90px"></textarea>
+    <div class="row"><button class="b primary" data-act="pkfind">Find on my route</button></div>`;
+  if (pkgResults.length) {
+    html += `<div class="locbox">`;
+    pkgResults.forEach((r, k) => {
+      if (!r.cands.length) html += `<div class="c">✗ “${esc(r.line)}” — no stop with house # ${esc(r.num)} on your route</div>`;
+      else if (r.added) html += `<div class="c" style="color:var(--ok)">✓ #${esc(seqLabel(r.added))} ${esc(fullAddr(r.added))}</div>`;
+      else html += `<div class="c">“${esc(r.line)}” matches ${r.cands.length} stops — which one?</div><div class="row">${r.cands.slice(0, 6).map(s => `<button class="b sm" data-act="pkpick" data-k="${k}" data-id="${esc(s.id)}">#${esc(seqLabel(s))} ${esc(fullAddr(s))}</button>`).join('')}</div>`;
+    });
+    html += `</div>`;
+  }
+  html += `<h3 style="margin:16px 0 4px;font-size:16px">On today's list</h3>`;
+  if (!list.length) html += `<p class="stat">None yet. The list clears itself tomorrow.</p>`;
+  list.forEach(s => {
+    html += `<div class="item" data-id="${esc(s.id)}"><div class="badge t-${normType(s.type)}">${esc(seqLabel(s))}</div>
+      <div class="itxt"><div class="a">📦 ${esc(fullAddr(s))}</div><div class="s">${esc(s.name || '')}${okPt(s.house) ? '' : ' · no house pin yet'}</div></div>
+      <button class="b sm" data-act="pkrm" data-id="${esc(s.id)}" style="flex:none">✕</button></div>`;
+  });
+  if (list.length) html += `<div class="row"><button class="b danger sm" data-act="pkclear">Clear today's list</button></div>`;
+  openSheet('pkg', html);
+}
+
+/* ================= package rating (1–10 📦) ================= */
+/* Counts packages per stop: every 📦 logged during route guidance + any you add by hand on a stop's page.
+   The busiest stop on the route is 10; everything else is scaled against it. */
+function pkgCounts(){
+  const c = new Map();
+  runs.forEach(r => (r.drops || []).forEach(d => (d.pkg || []).forEach(p => { const id = p.id || d.ids[0]; c.set(id, (c.get(id) || 0) + 1); })));
+  stops.forEach(s => { if (s.pkgManual) c.set(s.id, (c.get(s.id) || 0) + s.pkgManual); });
+  return c;
+}
+function pkgRatings(){
+  const c = pkgCounts();
+  const max = Math.max(0, ...c.values());
+  const r = new Map();
+  if (max) c.forEach((n, id) => r.set(id, { n, score: Math.max(1, Math.ceil(10 * n / max)) }));
+  return r;
+}
+
+/* ================= distance & direction ================= */
+const toR = x => x * Math.PI / 180;
+function distM(a, b){
+  const dLat = toR(b.lat - a.lat), dLng = toR(b.lng - a.lng);
+  const h = Math.sin(dLat/2) ** 2 + Math.cos(toR(a.lat)) * Math.cos(toR(b.lat)) * Math.sin(dLng/2) ** 2;
+  return 2 * 6371000 * Math.asin(Math.sqrt(h));
+}
+function bearing(a, b){
+  const y = Math.sin(toR(b.lng - a.lng)) * Math.cos(toR(b.lat));
+  const x = Math.cos(toR(a.lat)) * Math.sin(toR(b.lat)) - Math.sin(toR(a.lat)) * Math.cos(toR(b.lat)) * Math.cos(toR(b.lng - a.lng));
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+/* shortest distance (m) from point p to a polyline */
+function distToPath(p, pts){
+  let best = Infinity;
+  const kx = Math.cos(toR(p.lat)) * 111320, ky = 110540;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const ax = (pts[i].lng - p.lng) * kx, ay = (pts[i].lat - p.lat) * ky;
+    const bx = (pts[i+1].lng - p.lng) * kx, by = (pts[i+1].lat - p.lat) * ky;
+    const dx = bx - ax, dy = by - ay, L2 = dx*dx + dy*dy;
+    let t = L2 ? -(ax*dx + ay*dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    best = Math.min(best, Math.hypot(ax + t*dx, ay + t*dy));
+  }
+  return best;
+}
+function fmtDist(m){ const ft = m * 3.28084; return ft < 1000 ? Math.max(50, Math.round(ft / 50) * 50) + ' feet' : (m / 1609.34).toFixed(1) + ' miles'; }
+function fmtDistShort(m){ const ft = m * 3.28084; return ft < 1000 ? Math.max(10, Math.round(ft / 10) * 10) + ' ft' : (m / 1609.34).toFixed(1) + ' mi'; }
+const COMPASS = ['N','NE','E','SE','S','SW','W','NW'];
+function compass(b){ return COMPASS[Math.round(b / 45) % 8]; }
 
 /* ================= business hours ================= */
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -213,13 +411,13 @@ function fmtTime(t){ if (!t) return ''; let [h, m] = t.split(':').map(Number); c
 function daysText(days){
   if (!days.length) return '';
   if (days.length === 7) return 'Every day';
-  const runs = []; let start = days[0], prev = days[0];
+  const runsTxt = []; let start = days[0], prev = days[0];
   for (let i = 1; i <= days.length; i++) {
     if (days[i] === prev + 1) { prev = days[i]; continue; }
-    runs.push(start === prev ? DAYS[start] : DAYS[start] + (prev - start > 1 ? '–' : ', ') + DAYS[prev]);
+    runsTxt.push(start === prev ? DAYS[start] : DAYS[start] + (prev - start > 1 ? '–' : ', ') + DAYS[prev]);
     start = prev = days[i];
   }
-  return runs.join(', ');
+  return runsTxt.join(', ');
 }
 function hoursText(b){
   if (!b) return '';
@@ -236,7 +434,6 @@ function openNow(b, d){
   const toM = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
   const o = toM(b.open), c = toM(b.close), day = d.getDay();
   if (o < c) return b.days.includes(day) && mins >= o && mins < c;
-  // overnight hours (closes after midnight)
   return (b.days.includes(day) && mins >= o) || (b.days.includes((day + 6) % 7) && mins < c);
 }
 function openBadge(b){
@@ -250,23 +447,112 @@ function load(){
     const raw = localStorage.getItem(KEY);
     if (raw) stops = JSON.parse(raw).map(cleanStop);
     else {
-      const old = localStorage.getItem(OLD_KEY);   // migrate from first version (single location = mailbox)
+      const old = localStorage.getItem(OLD_KEY);
       stops = old ? JSON.parse(old).map(cleanStop) : [];
       if (old) save();
     }
   } catch(e){ stops = []; }
   try { Object.assign(settings, JSON.parse(localStorage.getItem(SKEY)) || {}); } catch(e){}
+  try { spaces = (JSON.parse(localStorage.getItem(SPKEY)) || []).map(cleanSpace).filter(Boolean); } catch(e){ spaces = []; }
+  try { runs = JSON.parse(localStorage.getItem(RKEY)) || []; if (!Array.isArray(runs)) runs = []; } catch(e){ runs = []; }
 }
 function save(){
   try { localStorage.setItem(KEY, JSON.stringify(stops)); }
   catch(e){ toast('Could not save — storage unavailable. Export a backup.'); }
 }
 function saveSettings(){ try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch(e){} }
+function saveSpaces(){ try { localStorage.setItem(SPKEY, JSON.stringify(spaces)); } catch(e){ toast('Could not save labels'); } }
+function saveRuns(){
+  if (runs.length > 60) runs = runs.slice(-60);
+  try { localStorage.setItem(RKEY, JSON.stringify(runs)); } catch(e){}
+}
+
+/* ================= photo storage (IndexedDB — kept separate so photos don't fill the stop list's space) ================= */
+let photoDB = null;
+function pdb(){
+  if (photoDB) return Promise.resolve(photoDB);
+  return new Promise((res, rej) => {
+    let r;
+    try { r = indexedDB.open('routeMapPhotos', 1); } catch(e){ return rej(e); }
+    r.onupgradeneeded = () => { const st = r.result.createObjectStore('photos', { keyPath: 'id' }); st.createIndex('stopId', 'stopId'); };
+    r.onsuccess = () => { photoDB = r.result; res(photoDB); };
+    r.onerror = () => rej(r.error);
+  });
+}
+/* fn must issue its requests synchronously; resolves when the transaction completes */
+async function pOp(mode, fn){
+  const db = await pdb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('photos', mode);
+    const r = fn(tx.objectStore('photos'));
+    tx.oncomplete = () => res(r && 'result' in r ? r.result : undefined);
+    tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+  });
+}
+const photoPut = rec => pOp('readwrite', st => st.put(rec));
+const photoGet = id => pOp('readonly', st => st.get(id));
+const photoAll = () => pOp('readonly', st => st.getAll());
+const photoClear = () => pOp('readwrite', st => st.clear());
+function photoDel(id){ revokePhoto(id); return pOp('readwrite', st => st.delete(id)); }
+function photoDelFor(stopId){
+  return pOp('readwrite', st => {
+    const r = st.index('stopId').openCursor(IDBKeyRange.only(stopId));
+    r.onsuccess = () => { const c = r.result; if (c) { revokePhoto(c.value.id); c.delete(); c.continue(); } };
+  });
+}
+const photoURLs = new Map();
+function revokePhoto(id){ const u = photoURLs.get(id); if (u) { URL.revokeObjectURL(u); photoURLs.delete(id); } }
+async function photoURL(id){
+  if (photoURLs.has(id)) return photoURLs.get(id);
+  const rec = await photoGet(id);
+  if (!rec || !rec.blob) return null;
+  const u = URL.createObjectURL(rec.blob); photoURLs.set(id, u); return u;
+}
+function fillThumbs(){
+  document.querySelectorAll('img[data-pid]:not([src])').forEach(async img => {
+    try { const u = await photoURL(img.dataset.pid); if (u) img.src = u; else img.alt = 'missing'; } catch(e){}
+  });
+}
+async function resizeImage(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Could not read that photo')); i.src = url; });
+    const max = 1600;
+    let w = img.naturalWidth, h = img.naturalHeight;
+    const k = Math.min(1, max / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.72));
+    if (!blob) throw new Error('Could not compress that photo');
+    return { blob, w, h };
+  } finally { URL.revokeObjectURL(url); }
+}
+function blobToDataURL(b){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(b); }); }
+async function dataURLToBlob(d){ const r = await fetch(d); return r.blob(); }
+let persistAsked = false;
+function askPersist(){ if (persistAsked) return; persistAsked = true; try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e){} }
+
+/* viewer */
+let viewList = [], viewIdx = 0;
+async function openViewer(list, idx){
+  viewList = list; viewIdx = idx;
+  $('viewer').style.display = 'flex';
+  await showViewer();
+}
+async function showViewer(){
+  const id = viewList[viewIdx];
+  $('vw-n').textContent = (viewIdx + 1) + ' / ' + viewList.length;
+  $('vw-img').src = (await photoURL(id)) || '';
+}
+$('viewer').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-vw]'); if (!b) return;
+  if (b.dataset.vw === 'close') { $('viewer').style.display = 'none'; $('vw-img').removeAttribute('src'); return; }
+  viewIdx = (viewIdx + (b.dataset.vw === 'next' ? 1 : -1) + viewList.length) % viewList.length;
+  showViewer();
+});
 
 /* ================= ordering ================= */
-function renumber(){
-  sorted(stops).forEach((s, i) => { s.seq = String(i + 1); });
-}
+function renumber(){ sorted(stops).forEach((s, i) => { s.seq = String(i + 1); }); }
 /* Put stop `rec` at position n; every other stop at n or later moves back one. */
 function insertAt(rec, n){
   stops.forEach(s => { if (s.id !== rec.id && seqNum(s) >= n) s.seq = String(seqNum(s) + 1); });
@@ -274,38 +560,75 @@ function insertAt(rec, n){
 }
 
 /* ================= map ================= */
-const map = L.map('map', { zoomControl: false }).setView([39.4457, -123.8053], 12);
-const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
-const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagery &copy; Esri' });
+const map = L.map('map', { zoomControl: false, maxZoom: 21 }).setView([39.4457, -123.8053], 12);
+const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 21, maxNativeZoom: 19, attribution: 'Imagery &copy; Esri' });
 street.addTo(map);
 const boxLayer = L.layerGroup().addTo(map);
 const houseLayer = L.layerGroup().addTo(map);
 const linkLayer = L.layerGroup().addTo(map);
+const spaceLayer = L.layerGroup().addTo(map);
+const navLayer = L.layerGroup().addTo(map);
 L.control.layers({ 'Street': street, 'Satellite': sat },
-  { 'Mailboxes': boxLayer, 'Houses / packages': houseLayer, 'Box ↔ house links': linkLayer },
+  { 'Mailboxes': boxLayer, 'Houses / packages': houseLayer, 'Box ↔ house links': linkLayer, 'Space numbers': spaceLayer },
   { position: 'topright' }).addTo(map);
 L.control.zoom({ position: 'topright' }).addTo(map);
+function zoomClass(){ map.getContainer().classList.toggle('lowz', map.getZoom() < 17); }
+map.on('zoomend', zoomClass);
 
 let routeLine = null;
 const temp = { box: null, house: null };
 
-function boxIcon(s, sel){
-  return L.divIcon({ className: '', iconSize: [30,30], iconAnchor: [15,15],
-    html: `<div class="pin t-${normType(s.type)}${sel ? ' sel' : ''}">${esc(seqLabel(s))}</div>` });
+/* House number = the leading number of the physical address (plus unit, if any). */
+function houseNum(s){
+  const m = String(s.address || '').match(/^\s*(\d+[A-Za-z]?(?:\s+1\/2)?)/);
+  const n = m ? m[1].replace(/\s+1\/2/, '½') : '';
+  const u = s.unit || '';
+  return n ? (u ? n + ' ' + u : n) : u;
 }
-function houseIcon(s, sel){
-  return L.divIcon({ className: '', iconSize: [28,28], iconAnchor: [14,14],
-    html: `<div class="hpin${sel ? ' sel' : ''}">${esc(seqLabel(s))}</div>` });
+/* settings.labels: 'mixed' = seq on mailboxes, seq + house # on houses; 'seq' = seq on both; 'num' = house # on both */
+function boxLabel(s){ return settings.labels === 'num' ? (houseNum(s) || seqLabel(s)) : seqLabel(s); }
+function houseLabelHTML(s){
+  const n = houseNum(s);
+  if (settings.labels === 'seq' || !n) return esc(seqLabel(s));
+  if (settings.labels === 'num') return esc(n);
+  return `<span class="hs">${esc(seqLabel(s))}·</span>${esc(n)}`;
+}
+function boxIcon(s, sel, done, pk){
+  return L.divIcon({ className: '', iconSize: [120,30], iconAnchor: [60,15],
+    html: `<div class="pinwrap"><div class="pin t-${normType(s.type)}${sel ? ' sel' : ''}${done ? ' done' : ''}${pk ? ' pk' : ''}">${esc(boxLabel(s))}${pk ? '<span class="pkflag">📦</span>' : ''}</div></div>` });
+}
+function houseIcon(s, sel, done, pk){
+  return L.divIcon({ className: '', iconSize: [120,30], iconAnchor: [60,15],
+    html: `<div class="pinwrap"><div class="hpin${sel ? ' sel' : ''}${done ? ' done' : ''}${s.houseApprox ? ' approx' : ''}${pk ? ' pk' : ''}">${houseLabelHTML(s)}${pk ? '<span class="pkflag">📦</span>' : ''}</div></div>` });
+}
+function updatePkgCount(){
+  const n = todayPkgs().length, el = $('pkgCount');
+  if (el) { el.textContent = n; el.style.display = n ? 'flex' : 'none'; }
+}
+/* Stops reached in today's run (the active run, or an unfinished one from the last 14 hours) are greyed out. */
+function currentRun(){
+  if (run) return run;
+  const last = runs[runs.length - 1];
+  return last && !last.done && Date.now() - last.start < 14 * 3600 * 1000 ? last : null;
+}
+function doneIds(){
+  const r = currentRun();
+  return new Set(r ? r.drops.flatMap(d => d.ids) : []);
 }
 
 function renderMarkers(){
   boxLayer.clearLayers(); houseLayer.clearLayers(); linkLayer.clearLayers();
+  const done = doneIds();
+  const pks = new Set(todayPkgs());
+  updatePkgCount();
   stops.forEach(s => {
-    if (editing && editing.id === s.id) return;     // temp markers show it while editing
-    const sel = s.id === selectedId;
-    const click = () => { if (!tapTarget && !editing) showDetail(s.id); };
-    if (okPt(s.box)) L.marker([s.box.lat, s.box.lng], { icon: boxIcon(s, sel), zIndexOffset: sel ? 900 : 0 }).on('click', click).addTo(boxLayer);
-    if (okPt(s.house)) L.marker([s.house.lat, s.house.lng], { icon: houseIcon(s, sel), zIndexOffset: sel ? 900 : 0 }).on('click', click).addTo(houseLayer);
+    if (editing && editing.id === s.id) return;
+    const sel = s.id === selectedId, dn = done.has(s.id), pk = pks.has(s.id) && !dn;
+    const click = () => { if (!tapTarget && !editing && !labelMode) showDetail(s.id); };
+    const z = sel ? 900 : pk ? 600 : dn ? -200 : 0;
+    if (okPt(s.box)) L.marker([s.box.lat, s.box.lng], { icon: boxIcon(s, sel, dn, pk), zIndexOffset: z }).on('click', click).addTo(boxLayer);
+    if (okPt(s.house)) L.marker([s.house.lat, s.house.lng], { icon: houseIcon(s, sel, dn, pk), zIndexOffset: z }).on('click', click).addTo(houseLayer);
     if (okPt(s.box) && okPt(s.house)) L.polyline([[s.box.lat, s.box.lng], [s.house.lat, s.house.lng]],
       { color: sel ? '#ffd60a' : '#ffffff', weight: sel ? 3 : 1.5, opacity: .75, dashArray: '3 5', interactive: false }).addTo(linkLayer);
   });
@@ -324,6 +647,59 @@ function fitAll(){
   else if (pts.length > 1) map.fitBounds(pts, { padding: [40,40] });
   else toast('Nothing placed on the map yet');
 }
+
+/* ================= space number labels (RV spaces etc. — map labels only, never connected) ================= */
+function cleanSpace(x){
+  if (!x) return null;
+  const p = mkPt(x.lat, x.lng), t = String(x.text || '').trim();
+  return p && t ? { id: x.id ? String(x.id) : uid(), text: t.slice(0, 20), lat: p.lat, lng: p.lng } : null;
+}
+function renderSpaces(){
+  spaceLayer.clearLayers();
+  spaces.forEach(sp => {
+    const m = L.marker([sp.lat, sp.lng], { icon: L.divIcon({ className: '', iconSize: [0,0], html: `<div class="spl">${esc(sp.text)}</div>` }),
+      draggable: labelMode, interactive: labelMode, keyboard: false, zIndexOffset: -500 });
+    if (labelMode) {
+      m.on('click', () => editSpace(sp.id));
+      m.on('dragend', () => { const p = m.getLatLng(); sp.lat = p.lat; sp.lng = p.lng; saveSpaces(); });
+    }
+    m.addTo(spaceLayer);
+  });
+}
+function bumpLabel(t){ return t.replace(/(\d+)(\D*)$/, (m, n, rest) => String(+n + 1).padStart(n.length, '0') + rest); }
+const spaceUndo = [];
+function addSpace(ll){
+  const text = $('lb-text').value.trim();
+  if (!text) { toast('Type a label first'); return; }
+  const sp = { id: uid(), text: text.slice(0, 20), lat: ll.lat, lng: ll.lng };
+  spaces.push(sp); spaceUndo.push(sp.id); saveSpaces(); renderSpaces();
+  $('lb-text').value = bumpLabel(text);
+}
+function editSpace(id){
+  const sp = spaces.find(x => x.id === id); if (!sp) return;
+  const t = prompt('Rename this label, or clear it to delete:', sp.text);
+  if (t === null) return;
+  if (!t.trim()) spaces = spaces.filter(x => x.id !== id); else sp.text = t.trim().slice(0, 20);
+  saveSpaces(); renderSpaces();
+}
+function setLabelMode(on){
+  labelMode = on;
+  map.getContainer().classList.toggle('labeling', on);
+  $('labelbar').style.display = on ? 'block' : 'none';
+  if (on) { closeSheet(); if (!map.hasLayer(spaceLayer)) map.addLayer(spaceLayer); if (map.getZoom() < 17) toast('Zoom in close so you can place labels accurately', 3000); }
+  renderSpaces();
+}
+$('labelbar').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-lb]'); if (!b) return;
+  if (b.dataset.lb === 'done') { setLabelMode(false); toast(spaces.length + ' space labels saved'); }
+  if (b.dataset.lb === 'undo') {
+    const id = spaceUndo.pop();
+    if (!id) { toast('Nothing to undo'); return; }
+    const sp = spaces.find(x => x.id === id);
+    spaces = spaces.filter(x => x.id !== id); saveSpaces(); renderSpaces();
+    if (sp) $('lb-text').value = sp.text;
+  }
+});
 
 /* ================= sheet ================= */
 function openSheet(mode, html, keepScroll){
@@ -351,27 +727,39 @@ let listCap = 300;
 function showList(keepScroll){
   const q = $('q').value.trim();
   const all = sorted(stops.filter(s => matches(s, q)));
+  const lastIdx = settings.lastId ? all.findIndex(s => s.id === settings.lastId) : -1;
+  if (lastIdx >= listCap) listCap = Math.ceil((lastIdx + 50) / 300) * 300;
   const list = all.slice(0, listCap);
   const nb = stops.filter(s => okPt(s.box)).length, nh = stops.filter(s => okPt(s.house)).length;
   let html = `<div class="shead"><h3>${q ? all.length + ' match' + (all.length === 1 ? '' : 'es') : stops.length + ' stops'}</h3><button class="x" data-act="close">×</button></div>`;
   if (!q && stops.length) html += `<div class="stat" style="margin-bottom:4px">${nb} mailboxes placed · ${nh} houses placed</div>`;
   if (!stops.length) html += `<p class="stat">No stops yet. Tap <b>＋</b> to add one, or import your route CSV from the ⋯ menu.</p>`;
   let lastGroup = null;
+  const done = doneIds();
+  const rate = pkgRatings();
   list.forEach(s => {
+    const pr = rate.get(s.id);
     if (s.group !== lastGroup) { html += `<div class="ghead">${esc(s.group || 'No section')}</div>`; lastGroup = s.group; }
     html += `
-    <div class="item" data-id="${esc(s.id)}">
+    <div class="item${s.id === settings.lastId ? ' last' : ''}${done.has(s.id) ? ' done' : ''}" data-id="${esc(s.id)}">
       <div class="badge t-${normType(s.type)}">${esc(seqLabel(s))}</div>
-      <div class="itxt"><div class="a">${esc(fullAddr(s)) || '<i>No address</i>'}</div>
-        <div class="s">${s.biz && s.biz.name ? '🏪 ' + esc(s.biz.name) + (s.name ? ' · ' + esc(s.name) : '') : (s.name ? esc(s.name) : '<i>no name</i>')}${s.notes ? ' · ' + esc(s.notes) : ''}</div></div>
-      <div class="tags">${openBadge(s.biz)}<span class="tag${okPt(s.box) ? ' ok' : ''}">${okPt(s.box) ? '✓' : '–'} box</span><span class="tag${okPt(s.house) ? ' ok' : ''}">${okPt(s.house) ? '✓' : '–'} house</span></div>
+      <div class="itxt"><div class="a">${hasPkgToday(s.id) ? '📦 ' : ''}${esc(fullAddr(s)) || '<i>No address</i>'}</div>
+        <div class="s">${s.photos.length ? '📷 ' : ''}${s.biz && s.biz.name ? '🏪 ' + esc(s.biz.name) + (s.name ? ' · ' + esc(s.name) : '') : (s.name ? esc(s.name) : '<i>no name</i>')}${s.notes ? ' · ' + esc(s.notes) : ''}</div></div>
+      <div class="tags">${pr ? `<span class="tag" style="color:var(--cbu)">📦 ${pr.score}/10</span>` : ''}${openBadge(s.biz)}<span class="tag${okPt(s.box) ? ' ok' : ''}">${okPt(s.box) ? '✓' : '–'} box</span><span class="tag${okPt(s.house) ? ' ok' : ''}">${okPt(s.house) ? '✓' : '–'} house</span></div>
     </div>`;
   });
   if (all.length > list.length) html += `<div class="row"><button class="b" data-act="more">Show ${Math.min(300, all.length - list.length)} more (${all.length - list.length} left)</button></div>`;
   openSheet('list', html, keepScroll);
+  if (!keepScroll && lastIdx >= 0) {
+    const sh = $('sheet'), el = sh.querySelector('.item.last');
+    if (el) sh.scrollTop = Math.max(0, el.offsetTop - sh.clientHeight / 2 + el.offsetHeight / 2);
+  }
 }
 
 /* ----- detail ----- */
+function thumbsHTML(ids, editable){
+  return `<div class="thumbs">${ids.map((pid, i) => `<div class="thw"><img class="thumb" data-pid="${esc(pid)}" data-idx="${i}" alt="Photo ${i + 1}">${editable ? `<button class="thx" data-act="delphoto" data-pid="${esc(pid)}" aria-label="Delete photo">✕</button>` : ''}</div>`).join('')}</div>`;
+}
 function locRowDetail(s, what){
   const p = s[what];
   return `<div class="locbox"><div class="t">${what === 'box' ? `<span class="dot t-${normType(s.type)}"></span>` : '<span class="sq"></span>'}${WHAT[what]}</div>
@@ -384,9 +772,10 @@ function showDetail(id){
   const s = stops.find(x => x.id === id);
   if (!s) return;
   selectedId = id;
+  settings.lastId = id; saveSettings();
   renderMarkers();
   const p = anyPt(s);
-  if (p) map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 17), { duration: .6 });
+  if (p && !nav.active) map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 17), { duration: .6 });
   const sameGroupNoBox = s.group && okPt(s.box) ? stops.filter(x => x.id !== s.id && x.group === s.group && !okPt(x.box)).length : 0;
   const html = `
     <div class="shead"><h3>#${esc(seqLabel(s))} · ${esc(s.group || 'No section')}</h3><button class="x" data-act="close">×</button></div>
@@ -397,7 +786,14 @@ function showDetail(id){
         <div class="bizline">${esc(hoursText(s.biz)) || '<span class="stat">Hours not set</span>'}</div>
         ${s.biz.note ? `<div class="c">${esc(s.biz.note)}</div>` : ''}</div>` : ''}
       ${s.notes ? `<div class="notes">${esc(s.notes)}</div>` : ''}
+      ${s.photos.length ? thumbsHTML(s.photos, false) : ''}
+      ${(() => { const pr = pkgRatings().get(s.id); return `<div class="locbox"><div class="t">📦 Packages ${pr ? `<span style="color:var(--cbu)">${'📦'.repeat(Math.min(pr.score, 10))}</span>` : ''}</div>
+        <div class="c">${pr ? `${pr.score}/10 · ${pr.n} package${pr.n > 1 ? 's' : ''} logged` : 'None logged yet'}</div>
+        <div class="row"><button class="b sm${hasPkgToday(s.id) ? ' primary' : ''}" data-act="pktoggle" data-id="${esc(s.id)}">${hasPkgToday(s.id) ? '📦 On today\'s list ✓' : '＋ Package today'}</button></div>
+        <div class="row"><button class="b sm" data-act="pkgplus" data-id="${esc(s.id)}">＋ Log a package</button>${s.pkgManual ? `<button class="b sm" data-act="pkgminus" data-id="${esc(s.id)}">− Undo one</button>` : ''}</div></div>`; })()}
       ${locRowDetail(s, 'box')}
+      ${s.houseApprox ? `<div class="warn" style="margin-top:6px">⚠ House pin was auto-placed — approximate. Check it on satellite view, then confirm it or edit and drag it.</div>
+        <div class="row"><button class="b sm" data-act="confirmhouse" data-id="${esc(s.id)}">✓ House pin is right</button></div>` : ''}
       ${locRowDetail(s, 'house')}
     </div>
     ${sameGroupNoBox ? `<div class="row"><button class="b" data-act="groupbox" data-id="${esc(s.id)}">Use this mailbox for ${sameGroupNoBox} other stop${sameGroupNoBox === 1 ? '' : 's'} in ${esc(s.group)}</button></div>` : ''}
@@ -405,12 +801,14 @@ function showDetail(id){
       <button class="b primary" data-act="edit" data-id="${esc(s.id)}">Edit</button>
       <button class="b" data-act="after" data-id="${esc(s.id)}">＋ Insert after</button>
     </div>
+    <div class="row"><button class="b" data-act="navhere" data-id="${esc(s.id)}">🧭 Guide me from this stop</button></div>
     <div class="row">
       <button class="b" data-act="prev" data-id="${esc(s.id)}">◀ Prev stop</button>
       <button class="b" data-act="next" data-id="${esc(s.id)}">Next stop ▶</button>
     </div>
     <div class="row"><button class="b" data-act="list">Back to list</button></div>`;
   openSheet('detail', html);
+  fillThumbs();
 }
 function neighbor(id, dir){
   const list = sorted(stops);
@@ -421,15 +819,18 @@ function neighbor(id, dir){
 /* ----- form ----- */
 function startForm(id, afterId){
   const s = id ? stops.find(x => x.id === id) : null;
-  if (s) editing = Object.assign({}, s, { box: s.box ? Object.assign({}, s.box) : null, house: s.house ? Object.assign({}, s.house) : null, origSeq: s.seq });
+  if (s) editing = Object.assign({}, s, { box: s.box ? Object.assign({}, s.box) : null, house: s.house ? Object.assign({}, s.house) : null,
+    photos: s.photos.slice(), origSeq: s.seq, houseOrig: s.house ? Object.assign({}, s.house) : null });
   else {
     const after = afterId ? stops.find(x => x.id === afterId) : null;
     const maxSeq = stops.reduce((m, x) => isFinite(seqNum(x)) ? Math.max(m, seqNum(x)) : m, 0);
-    editing = { id: null, seq: String(after && isFinite(seqNum(after)) ? Math.floor(seqNum(after)) + 1 : Math.floor(maxSeq) + 1),
+    editing = { id: null, newId: uid(), seq: String(after && isFinite(seqNum(after)) ? Math.floor(seqNum(after)) + 1 : Math.floor(maxSeq) + 1),
       group: after ? after.group : '', address: '', unit: '', name: '', type: after ? after.type : 'curb', notes: '',
       box: after && normType(after.type) === 'cbu' && okPt(after.box) ? Object.assign({}, after.box) : null,
-      house: null, insertMode: !!after };
+      house: null, photos: [], insertMode: !!after };
   }
+  editing.addedPhotos = []; editing.removedPhotos = [];
+  if (s) { settings.lastId = s.id; saveSettings(); }
   selectedId = null;
   renderMarkers();
   updateTemps();
@@ -471,6 +872,10 @@ function showForm(){
     <select id="f-type">${opts}</select>
     <label for="f-notes">Notes</label>
     <textarea id="f-notes" placeholder="Dog, gate code, leave parcels at side door…">${esc(e.notes)}</textarea>
+    <div class="locbox"><div class="t">📷 Photos</div>
+      ${e.photos.length ? thumbsHTML(e.photos, true) : '<div class="c">None yet — e.g. the house, the porch drop spot, a gate.</div>'}
+      <div class="row"><button class="b sm" data-act="addphoto">📷 Add photo</button></div>
+    </div>
     <label class="chk"><input type="checkbox" id="f-isbiz"${e.biz ? ' checked' : ''}> This is a business</label>
     <div id="bizfields" style="display:${e.biz ? 'block' : 'none'}">
       <label for="f-bname">Business name</label>
@@ -488,10 +893,12 @@ function showForm(){
     ${locRowForm('house')}
     <div class="row">
       <button class="b primary" data-act="save">Save</button>
+      ${e.id ? `<button class="b primary" data-act="savenext">Save &amp; next ▶</button>` : ''}
       <button class="b" data-act="cancel">Cancel</button>
     </div>
     ${e.id ? `<div class="row"><button class="b danger" data-act="del">Delete stop</button></div>` : ''}`;
   openSheet('form', html, true);
+  fillThumbs();
 }
 function readForm(){
   if (!editing || !$('f-seq')) return;
@@ -536,11 +943,19 @@ function endForm(){
   ['box','house'].forEach(w => { if (temp[w]) { map.removeLayer(temp[w]); temp[w] = null; } });
   setTap(null);
 }
-function saveForm(){
+function cancelForm(){
+  const e = editing; if (!e) return;
+  e.addedPhotos.forEach(pid => photoDel(pid).catch(() => {}));   // photos added during a cancelled edit are thrown away
+  const back = e.id;
+  endForm(); renderMarkers();
+  back ? showDetail(back) : closeSheet();
+}
+function saveForm(goNext){
   readForm();
   const e = editing;
-  if (!e.address && !e.name && !okPt(e.box) && !okPt(e.house)) { toast('Add an address, name or location first'); return; }
-  const rec = cleanStop(Object.assign({}, e, { id: e.id || uid() }));
+  if (!e.address && !e.name && !okPt(e.box) && !okPt(e.house) && !e.photos.length) { toast('Add an address, name or location first'); return; }
+  if (e.houseApprox && e.houseOrig && (!okPt(e.house) || e.house.lat !== e.houseOrig.lat || e.house.lng !== e.houseOrig.lng)) e.houseApprox = false;
+  const rec = cleanStop(Object.assign({}, e, { id: e.id || e.newId }));
   const n = parseFloat(rec.seq);
   const moved = e.id && String(e.origSeq) !== rec.seq;
   const clash = isFinite(n) && stops.find(x => x.id !== rec.id && seqNum(x) === n);
@@ -550,13 +965,40 @@ function saveForm(){
   }
   const i = stops.findIndex(x => x.id === rec.id);
   if (i >= 0) stops[i] = rec; else stops.push(rec);
-  if (moved && clash) renumber();       // close the gap the stop left behind
+  if (moved && clash) renumber();
   save();
+  e.removedPhotos.forEach(pid => photoDel(pid).catch(() => {}));
   endForm();
   renderMarkers();
   toast('Saved');
-  showDetail(rec.id);
+  const nx = goNext ? neighbor(rec.id, 1) : null;
+  if (nx) startForm(nx.id); else showDetail(rec.id);
 }
+async function addPhotos(files){
+  if (!editing || !files.length) return;
+  const stopId = editing.id || editing.newId;
+  toast('Adding photo' + (files.length > 1 ? 's' : '') + '…', 8000);
+  let added = 0;
+  for (const f of files) {
+    try {
+      const { blob, w, h } = await resizeImage(f);
+      const id = uid();
+      await photoPut({ id, stopId, blob, w, h, created: Date.now() });
+      if (!editing) { photoDel(id).catch(() => {}); return; }
+      editing.photos.push(id); editing.addedPhotos.push(id); added++;
+    } catch(err) { toast('Photo failed: ' + (err && err.message || err), 4000); }
+  }
+  askPersist();
+  if (editing) { readForm(); showForm(); }
+  if (added) toast(added + ' photo' + (added > 1 ? 's' : '') + ' added — tap Save to keep', 3000);
+}
+let photoTarget = { kind: 'stop' };
+$('photoIn').addEventListener('change', ev => {
+  const files = [...ev.target.files]; ev.target.value = '';
+  const tgt = photoTarget; photoTarget = { kind: 'stop' };
+  if (!files.length) return;
+  if (tgt.kind === 'chk') addCheckPhotos(tgt.idx, files); else addPhotos(files);
+});
 
 function useGPS(what){
   if (!navigator.geolocation) { toast('Location not available on this device'); return; }
@@ -600,28 +1042,833 @@ function setTap(what){
   else if (sheetMode) $('sheet').classList.remove('hidden');
 }
 map.on('click', e => {
+  if (labelMode) { addSpace(e.latlng); return; }
   if (!tapTarget || !editing) return;
   const w = tapTarget;
   setTap(null);
   setEditLoc(w, e.latlng.lat, e.latlng.lng);
 });
 
+/* ================= shared "you are here" dot ================= */
+function updateUserDot(ll, acc){
+  if (!userDot) {
+    userAcc = L.circle(ll, { radius: acc, color: '#3b9cff', weight: 1, fillOpacity: .12, interactive: false }).addTo(map);
+    userDot = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#3b9cff', fillOpacity: 1, interactive: false }).addTo(map);
+  } else { userDot.setLatLng(ll); userAcc.setLatLng(ll).setRadius(acc); }
+}
+function removeUserDot(){
+  if (userDot) { map.removeLayer(userDot); map.removeLayer(userAcc); userDot = userAcc = null; }
+}
+
+/* ================= route guidance ================= */
+const nav = { active: false, paused: false, pkg: null, legs: [], i: 0, watch: null, pos: null, hPos: null, heading: null, acc: null,
+  follow: true, approachSaid: false, steps: [], route: null, lastFetch: 0, offCount: 0, fetching: false, needFetch: false, wake: null };
+
+function navTargetPt(s){
+  if (settings.navTo === 'house') return okPt(s.house) ? s.house : (okPt(s.box) ? s.box : null);
+  return anyPt(s);
+}
+/* Stops in seq order; consecutive stops at the same spot (e.g. a cluster box) become one leg. */
+function buildLegs(){
+  const legs = [];
+  sorted(stops).forEach(s => {
+    const p = navTargetPt(s); if (!p) return;
+    const last = legs[legs.length - 1];
+    if (last && distM(last.pt, p) < 15) { last.stops.push(s); return; }
+    legs.push({ pt: { lat: p.lat, lng: p.lng }, stops: [s] });
+  });
+  return legs;
+}
+function legSameGroup(leg){ return leg.stops.every(s => s.group && s.group === leg.stops[0].group); }
+function legTitle(leg){
+  const s = leg.stops[0], n = leg.stops.length;
+  if (n === 1) return fullAddr(s) || s.name || 'Stop #' + seqLabel(s);
+  return legSameGroup(leg) ? `${s.group} — ${n} boxes` : `${fullAddr(s)} + ${n - 1} more`;
+}
+function legSeqText(leg){
+  const a = seqLabel(leg.stops[0]), b = seqLabel(leg.stops[leg.stops.length - 1]);
+  return a === b ? '#' + a : `#${a}–${b}`;
+}
+
+/* --- speech --- */
+function sayPair(p){ return p === '00' ? 'hundred' : p[0] === '0' ? 'oh ' + p[1] : p; }
+/* "18760" -> "18 7 60" (eighteen seven sixty), "16451" -> "16 4 51", "1650" -> "16 50" */
+function sayNum(d){
+  d = String(d).replace(/\D/g, '');
+  if (d.length === 5) return d.slice(0,2) + ' ' + (d[2] === '0' ? 'oh' : d[2]) + ' ' + sayPair(d.slice(3));
+  if (d.length === 4) return d.slice(0,2) + ' ' + sayPair(d.slice(2));
+  return d.split('').join(' ');
+}
+const ABBR = { Rd:'Road', Ln:'Lane', Dr:'Drive', Ct:'Court', Hwy:'Highway', St:'Street', Ave:'Avenue', Blvd:'Boulevard', Pl:'Place', Wy:'Way',
+  N:'North', S:'South', E:'East', W:'West' };
+function speakAddr(s){
+  const a = String(s.address || '').replace(/\?/g, '');
+  const m = a.match(/^\s*(\d+)(.*)$/);
+  let num = '', rest = a;
+  if (m) { num = sayNum(m[1]); rest = m[2]; }
+  rest = rest.replace(/\b1\/2\b/, 'and a half').replace(/\b([A-Z][a-z]{0,3})\b\.?/g, w => ABBR[w.replace('.', '')] || w);
+  return (num + ' ' + rest).replace(/\s+/g, ' ').trim() + (s.unit ? ', unit ' + s.unit.replace(/[()]/g, '') : '');
+}
+function legPkgStops(leg){ const t = todayPkgs(); return leg.stops.filter(s => t.includes(s.id)); }
+function legSpeech(leg){
+  const s = leg.stops[0], n = leg.stops.length;
+  let t = n > 1 && legSameGroup(leg) ? `${s.group}, ${n} boxes` : speakAddr(s) + (n > 1 ? `, and ${n - 1} more` : '');
+  if (settings.navNames && s.name && n === 1) t += ', ' + s.name;
+  return t;
+}
+function pkgSuffix(leg){
+  const pk = legPkgStops(leg), n = leg.stops.length;
+  if (!pk.length) return '';
+  return n > 1 ? `. Package for ${pk.map(x => x.unit ? 'unit ' + x.unit.replace(/[()]/g, '') : sayNum(houseNum(x).split(' ')[0])).join(', ')}` : '. With a package';
+}
+function say(text){
+  if (!settings.navVoice || !('speechSynthesis' in window)) return;
+  try { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 1; speechSynthesis.speak(u); } catch(e){}
+}
+function relBearing(from, to){
+  if (nav.heading == null) return null;
+  return ((bearing(from, to) - nav.heading + 540) % 360) - 180;
+}
+function sideWord(from, to){
+  const rel = relBearing(from, to);
+  if (rel == null) return '';
+  if (Math.abs(rel) < 15) return ', straight ahead';
+  if (Math.abs(rel) > 165) return ', behind you';
+  return rel > 0 ? ', on the right' : ', on the left';
+}
+
+/* --- street turns (optional; uses the free OSRM demo server, needs reception) --- */
+function stepText(st){
+  const m = st.maneuver || {}, mod = m.modifier || '', name = st.name ? ' onto ' + expandRoad(st.name) : '';
+  switch (m.type) {
+    case 'depart': case 'arrive': return '';
+    case 'turn': case 'end of road':
+      if (mod === 'uturn') return 'Make a U-turn' + name;
+      if (mod === 'straight') return 'Continue straight' + name;
+      return 'Turn ' + mod + name;
+    case 'new name': case 'continue':
+      if (mod === 'uturn') return 'Make a U-turn';
+      return mod && mod !== 'straight' ? 'Keep ' + mod + name : (st.name ? 'Continue' + name : '');
+    case 'fork': return 'Keep ' + (mod || 'straight') + ' at the fork' + name;
+    case 'merge': return 'Merge' + (mod ? ' ' + mod : '') + name;
+    case 'on ramp': return 'Take the ramp' + name;
+    case 'off ramp': return 'Take the exit' + name;
+    case 'roundabout': case 'rotary': return 'At the roundabout, take exit ' + (m.exit || 1) + name;
+    default: return mod ? 'Go ' + mod + name : '';
+  }
+}
+function expandRoad(n){ return String(n).replace(/\b([A-Z][a-z]{0,3})\b\.?/g, w => ABBR[w.replace('.', '')] || w); }
+function stepArrow(st){
+  const mod = (st.maneuver && st.maneuver.modifier) || '';
+  return mod === 'uturn' ? '⤺' : /left/.test(mod) ? (/slight/.test(mod) ? '↖' : '↰') : /right/.test(mod) ? (/slight/.test(mod) ? '↗' : '↱') : '↑';
+}
+async function fetchTurns(){
+  navLayer.clearLayers(); nav.steps = []; nav.route = null; nav.offCount = 0;
+  const leg = nav.legs[nav.i];
+  if (!settings.navTurns || !leg || !nav.pos || !navigator.onLine || nav.fetching) return;
+  if (distM(nav.pos, leg.pt) < 150) return;   // close enough — no street directions needed
+  nav.fetching = true; nav.lastFetch = Date.now();
+  const myI = nav.i;
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${nav.pos.lng.toFixed(6)},${nav.pos.lat.toFixed(6)};${leg.pt.lng.toFixed(6)},${leg.pt.lat.toFixed(6)}?steps=true&overview=full&geometries=geojson`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (myI !== nav.i || !nav.active) return;
+    if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('no route');
+    const rt = j.routes[0];
+    nav.route = rt.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+    nav.steps = rt.legs[0].steps.map(st => ({ text: stepText(st), arrow: stepArrow(st),
+      pt: { lat: st.maneuver.location[1], lng: st.maneuver.location[0] }, done: false, pre: false, said: false })).filter(s => s.text);
+    L.polyline(nav.route.map(p => [p.lat, p.lng]), { color: '#3b9cff', weight: 6, opacity: .55, interactive: false }).addTo(navLayer);
+  } catch(e) {
+    toast('Street turns unavailable right now — still guiding stop to stop', 3000);
+  } finally { nav.fetching = false; renderNav(); }
+}
+function updateTurns(cur){
+  if (!nav.steps.length) return;
+  const st = nav.steps.find(x => !x.done);
+  if (st) {
+    const d = distM(cur, st.pt);
+    if (d < 25) st.done = true;
+    else if (!st.pre && d < 400 && d > 150) { st.pre = true; say(`In ${fmtDist(d)}, ${st.text}`); }
+    else if (!st.said && d <= 80) { st.said = true; st.pre = true; say(st.text); }
+  }
+  if (nav.route) {
+    nav.offCount = distToPath(cur, nav.route) > 50 ? nav.offCount + 1 : 0;
+    if (nav.offCount >= 3 && Date.now() - nav.lastFetch > 15000) fetchTurns();
+  }
+}
+
+/* --- keep the screen awake while guiding --- */
+async function wakeOn(){
+  try { if ('wakeLock' in navigator && !nav.wake) { nav.wake = await navigator.wakeLock.request('screen'); nav.wake.addEventListener('release', () => { nav.wake = null; }); } } catch(e){ nav.wake = null; }
+}
+function wakeOff(){ try { if (nav.wake) nav.wake.release(); } catch(e){} nav.wake = null; }
+
+function navWatchOn(){
+  if (nav.watch != null) navigator.geolocation.clearWatch(nav.watch);
+  nav.watch = navigator.geolocation.watchPosition(onNavFix, err => toast('GPS: ' + err.message, 3000),
+    { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
+}
+function navWatchOff(){ if (nav.watch != null) navigator.geolocation.clearWatch(nav.watch); nav.watch = null; }
+
+function startNav(o){
+  if (!navigator.geolocation) { toast('Location not available on this device'); return; }
+  const legs = buildLegs();
+  if (!legs.length) { toast('Place some mailbox or house pins first'); return; }
+  let i = 0;
+  if (o && o.id) {
+    i = legs.findIndex(l => l.stops.some(s => s.id === o.id));
+    if (i < 0) { const st = stops.find(x => x.id === o.id); const n = st ? seqNum(st) : 0; i = legs.findIndex(l => l.stops.some(s => seqNum(s) >= n)); }
+  } else if (o && o.seq != null && isFinite(o.seq)) {
+    i = legs.findIndex(l => l.stops.some(s => seqNum(s) >= o.seq));
+  }
+  if (i < 0) { toast('No placed stops at or after that #'); return; }
+  if (editing) cancelForm();
+  if (labelMode) setLabelMode(false);
+  if (watchId != null) toggleLocate();
+  closeSheet();
+  Object.assign(nav, { legs, i, active: true, paused: false, follow: true, approachSaid: false, pos: null, hPos: null, heading: null,
+    steps: [], route: null, needFetch: true });
+  timerStart(o && o.resume);
+  say('Starting route.');            // first speech must happen during the tap so iPhone allows it
+  navWatchOn(); wakeOn();
+  saveNavProgress(); announceLeg(); renderNav();
+  const skipped = stops.length - legs.reduce((n, l) => n + l.stops.length, 0);
+  if (skipped > 0) toast(`${skipped} stop${skipped > 1 ? 's' : ''} without a pin will be skipped`, 3500);
+}
+function saveNavProgress(){
+  const leg = nav.legs[nav.i];
+  settings.navPos = leg ? { id: leg.stops[0].id, seq: seqLabel(leg.stops[0]) } : null;
+  saveSettings();
+}
+function announceLeg(){
+  const leg = nav.legs[nav.i]; if (!leg) return;
+  const d = nav.pos ? ', ' + fmtDist(distM(nav.pos, leg.pt)) : '';
+  say(`Next, stop ${seqLabel(leg.stops[0])}, ${legSpeech(leg)}${d}${pkgSuffix(leg)}`);
+}
+function advance(dir, how){
+  const ni = nav.i + dir;
+  if (ni < 0) { toast('Already at the first stop'); return; }
+  nav.i = ni; nav.approachSaid = false; nav.needFetch = true; navLayer.clearLayers(); nav.steps = []; nav.route = null;
+  if (nav.i >= nav.legs.length) { finishNav(); return; }
+  saveNavProgress();
+  if (how !== 'quiet') announceLeg();
+  if (nav.pos) { nav.needFetch = false; fetchTurns(); }
+  renderNav();
+}
+function arrive(){
+  const leg = nav.legs[nav.i];
+  timerArrive(nav.i, leg);
+  renderMarkers();                    // grey out what's done
+  say('Arrived, ' + (leg.stops.length > 1 && legSameGroup(leg) ? leg.stops[0].group : sayNum(houseNum(leg.stops[0]).split(' ')[0]) || 'stop')
+    + (legPkgStops(leg).length ? '. Package here.' : ''));
+  advance(1);
+}
+function onNavFix(p){
+  if (!nav.active || nav.paused) return;
+  const cur = { lat: p.coords.latitude, lng: p.coords.longitude };
+  nav.acc = p.coords.accuracy;
+  if (p.coords.heading != null && !isNaN(p.coords.heading) && p.coords.speed > 1.5) nav.heading = p.coords.heading;
+  else if (nav.hPos && distM(nav.hPos, cur) > 6) nav.heading = bearing(nav.hPos, cur);
+  if (!nav.hPos || distM(nav.hPos, cur) > 6) nav.hPos = cur;
+  nav.pos = cur;
+  updateUserDot([cur.lat, cur.lng], p.coords.accuracy);
+  if (nav.follow) map.setView([cur.lat, cur.lng], Math.max(map.getZoom(), 17), { animate: true });
+
+  if (nav.pkg) { renderNav(); return; }    // walking a package — don't auto-advance or count it as driving away
+  timerDepartCheck(cur);
+  const leg = nav.legs[nav.i];
+  if (!leg) { finishNav(); return; }
+  const R = (settings.arriveFt || 80) / 3.28084;
+  const d = distM(cur, leg.pt);
+  const next = nav.legs[nav.i + 1];
+  if (d <= R) { arrive(); return; }
+  if (next && distM(cur, next.pt) <= R) {          // passed this one without getting close — move on
+    timerSkip(nav.i, leg);
+    nav.i++; arrive(); return;
+  }
+  if (!nav.approachSaid && d <= 160) { nav.approachSaid = true; say(`In ${fmtDist(d)}, ${legSpeech(leg)}${sideWord(cur, leg.pt)}${pkgSuffix(leg)}`); }
+  if (nav.needFetch) { nav.needFetch = false; fetchTurns(); }
+  updateTurns(cur);
+  renderNav();
+}
+function pauseNav(){
+  nav.paused = true; navWatchOff(); wakeOff();
+  try { speechSynthesis.cancel(); } catch(e){}
+  timerPause();
+  renderNav();
+}
+function resumeNav(){
+  nav.paused = false; nav.follow = true; nav.approachSaid = false; nav.needFetch = true;
+  timerResume();
+  say('Resuming.'); navWatchOn(); wakeOn(); announceLeg(); renderNav();
+}
+/* --- package deliveries: press 📦 when you leave the vehicle with a package, press again when you're back --- */
+function pkgToggle(){
+  if (!run) return;
+  if (nav.pkg) {
+    const d = run.drops[nav.pkg.di];
+    const to = Date.now();
+    if (d) { d.pkg = (d.pkg || []).concat({ from: nav.pkg.from, to, id: nav.pkg.id }); d.depart = null; }
+    const ms = activeMs(nav.pkg.from, to);
+    if (nav.pkg.id && hasPkgToday(nav.pkg.id)) setTodayPkgs(todayPkgs().filter(x => x !== nav.pkg.id));   // delivered — off today's list
+    nav.pkg = null; saveRuns(); renderMarkers();
+    say('Package done, ' + sayDur(ms));
+  } else {
+    const di = run.drops.length - 1;
+    if (di < 0) { toast('Reach your first stop before starting a package'); return; }
+    const d = run.drops[di];
+    let pid = d.ids[0];
+    if (d.ids.length > 1) {          // cluster box: ask which unit so the package counts for the right address
+      const ans = prompt(`Which unit or space is the package for? (e.g. ${stops.find(x => x.id === d.ids[1]) ? stops.find(x => x.id === d.ids[1]).unit || 'RV12' : 'RV12'})\nLeave blank if not sure.`, '');
+      if (ans === null) return;
+      const a = ans.trim().toLowerCase().replace(/[#\s]/g, '');
+      const m = a && d.ids.map(id => stops.find(x => x.id === id)).find(x => x && x.unit.toLowerCase().replace(/[#\s()]/g, '') === a.replace(/[()]/g, ''));
+      if (m) pid = m.id; else if (a) toast('No unit "' + ans.trim() + '" in this cluster — counted for the first box', 3000);
+    }
+    nav.pkg = { from: Date.now(), di, id: pid };
+    say('Package delivery, stop ' + d.seq);
+  }
+  renderNav();
+}
+function sayDur(ms){
+  const s = Math.round(ms / 1000), m = Math.floor(s / 60), sec = s % 60;
+  return (m ? m + (m === 1 ? ' minute ' : ' minutes ') : '') + sec + ' seconds';
+}
+function pkgMs(d, r){ return (d.pkg || []).reduce((t, p) => t + activeMs(p.from, p.to, r), 0); }
+
+function endNav(){
+  if (nav.pkg) pkgToggle();
+  navWatchOff(); wakeOff(); try { speechSynthesis.cancel(); } catch(e){}
+  if (!nav.paused) timerPause();
+  nav.active = false; nav.paused = false; navLayer.clearLayers(); removeUserDot();
+  $('navbar').style.display = 'none';
+  if (settings.navPos) toast(`Stopped at #${settings.navPos.seq}. Resume from the ⋯ menu.`, 4000);
+}
+function finishNav(){
+  if (nav.pkg) pkgToggle();
+  timerFinish();
+  renderMarkers();
+  say('Route complete. Nice work.');
+  settings.navPos = null; saveSettings();
+  navWatchOff(); wakeOff(); nav.active = false; navLayer.clearLayers(); removeUserDot();
+  $('navbar').style.display = 'none';
+  showTimes(runs.length - 1);
+}
+const ARROW_SVG = '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 2 L20 21 L12 16.5 L4 21 Z" fill="#3b9cff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+function renderNav(){
+  const el = $('navbar');
+  if (!nav.active) { el.style.display = 'none'; return; }
+  const leg = nav.legs[nav.i];
+  if (!leg) { el.style.display = 'none'; return; }
+  const s = leg.stops[0];
+  let dist = '', rot = 0, dirTxt = '';
+  if (nav.pos) {
+    const d = distM(nav.pos, leg.pt);
+    dist = fmtDistShort(d);
+    const rel = relBearing(nav.pos, leg.pt);
+    if (rel != null) rot = rel; else { rot = bearing(nav.pos, leg.pt); dirTxt = ' ' + compass(rot); }
+  }
+  const st = nav.steps.find(x => !x.done);
+  const turn = st && nav.pos ? `<div class="nv-turn">${st.arrow} ${esc(st.text)} · ${fmtDistShort(distM(nav.pos, st.pt))}</div>` : '';
+  const sub = [legSeqText(leg), leg.stops.length === 1 && s.name ? s.name : '', settings.navTo === 'house' && okPt(s.house) ? 'House' : (okPt(s.box) ? 'Mailbox' : 'House')].filter(Boolean).join(' · ');
+  el.innerHTML = `
+    <div class="nv-top"><span>Stop ${nav.i + 1} of ${nav.legs.length} · ${esc(s.group || '')}</span><span>${timerClock()}${nav.acc != null ? ' · GPS ±' + Math.round(nav.acc * 3.28) + ' ft' : ''}</span></div>
+    <div class="nv-main">
+      <div class="nv-arrow"><svg width="30" height="30" viewBox="0 0 24 24" style="transform:rotate(${Math.round(rot)}deg)"><path d="M12 2 L20 21 L12 16.5 L4 21 Z" fill="#3b9cff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+      <div class="nv-txt"><div class="nv-addr">${esc(legTitle(leg))}</div><div class="nv-sub">${esc(sub)}</div></div>
+      <div class="nv-dist">${dist || '…'}<div class="nv-sub">${dirTxt}</div></div>
+    </div>
+    ${turn}
+    ${(() => {
+      if (nav.pkg) return '';
+      const ld = run && run.drops[run.drops.length - 1];
+      const here = ld && !ld.depart ? stops.filter(x => ld.ids.includes(x.id) && hasPkgToday(x.id)) : [];
+      if (here.length) return `<div class="nv-pk">📦 PACKAGE HERE (#${esc(ld.seq)}): ${here.map(x => esc(ld.ids.length > 1 && x.unit ? x.unit : fullAddr(x))).join(', ')} — tap 📦 to time it</div>`;
+      const pk = legPkgStops(leg);
+      return pk.length ? `<div class="nv-pk">📦 Next stop has a package: ${pk.map(x => esc(leg.stops.length > 1 && x.unit ? x.unit : fullAddr(x))).join(', ')}</div>` : '';
+    })()}
+    ${nav.pkg && run && run.drops[nav.pkg.di] ? `<div class="nv-turn" style="background:#5a3800">📦 Package at #${esc(run.drops[nav.pkg.di].seq)} · ${fmtDur(activeMs(nav.pkg.from, Date.now()))} — tap 📦 when you're back in the vehicle</div>` : ''}
+    ${nav.paused ? '<div class="nv-paused">Paused — your place is saved</div>' : ''}
+    <div class="nv-btns">
+      <button data-nv="pkg" class="${nav.pkg ? 'pkg-on' : ''}" aria-label="Package delivery">📦</button>
+      <button data-nv="back" aria-label="Previous stop">◀</button>
+      ${nav.paused ? '<button class="primary" data-nv="resume" aria-label="Resume">▶</button>' : '<button data-nv="pause" aria-label="Pause">⏸</button>'}
+      <button data-nv="skip" aria-label="Next stop">▶|</button>
+      <button data-nv="voice" class="${settings.navVoice ? '' : 'off'}" aria-label="Voice">🔊</button>
+      ${nav.follow ? '' : '<button data-nv="center" aria-label="Recenter">◎</button>'}
+      <button data-nv="maps" aria-label="Apple Maps directions">🗺</button>
+      <button data-nv="end" aria-label="End">✕</button>
+    </div>`;
+  el.style.display = 'block';
+}
+$('navbar').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-nv]'); if (!b) return;
+  const leg = nav.legs[nav.i];
+  switch (b.dataset.nv) {
+    case 'pkg': pkgToggle(); break;
+    case 'back': advance(-1); break;
+    case 'skip': if (leg) timerSkip(nav.i, leg); advance(1); break;
+    case 'pause': pauseNav(); break;
+    case 'resume': resumeNav(); break;
+    case 'voice': settings.navVoice = !settings.navVoice; saveSettings(); if (settings.navVoice) say('Voice on'); else try { speechSynthesis.cancel(); } catch(e){} renderNav(); break;
+    case 'center': nav.follow = true; if (nav.pos) map.setView([nav.pos.lat, nav.pos.lng], Math.max(map.getZoom(), 17)); renderNav(); break;
+    case 'maps': if (leg) window.location.href = `https://maps.apple.com/?daddr=${leg.pt.lat},${leg.pt.lng}&dirflg=d`; break;
+    case 'end': endNav(); break;
+  }
+});
+$('navbar').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-q]'); if (!b || !quick.on) return;
+  switch (b.dataset.q) {
+    case 'box': quickGPS('box'); break;
+    case 'house': quickGPS('house'); break;
+    case 'same': if (quick.lastBox) quickSet('box', quick.lastBox); break;
+    case 'skip': quickNext(); break;
+    case 'prev': { const p = neighbor(quick.id, -1); if (p) { quick.id = p.id; renderQuick(); } break; }
+    case 'done': stopQuick(); toast(stops.filter(x => okPt(x.box)).length + ' mailboxes placed so far'); break;
+  }
+});
+map.on('dragstart', () => { if (nav.active && nav.follow) { nav.follow = false; renderNav(); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && nav.active && !nav.paused) { wakeOn(); navWatchOn(); }
+});
+
+/* ================= timing — each drop, each section, whole route ================= */
+/* A run = one trip through the route (continued if you resume within 14 hours).
+   For each stop reached: arrive time, and depart time (when you drive away). Paused time is not counted. */
+let run = null;
+function timerStart(resume){
+  const last = runs[runs.length - 1];
+  const now = Date.now();
+  if (resume && last && !last.done && now - last.start < 14 * 3600 * 1000) {
+    run = last;
+    const op = run.pauses.find(p => !p.to); if (op) op.to = now;
+  } else {
+    run = { id: uid(), start: now, end: null, done: false, pauses: [], drops: [] };
+    runs.push(run);
+  }
+  saveRuns();
+  renderMarkers();
+}
+function activeMs(a, b, r){
+  r = r || run;
+  let t = b - a;
+  (r ? r.pauses : []).forEach(p => { const to = p.to || Date.now(); const o = Math.min(b, to) - Math.max(a, p.from); if (o > 0) t -= o; });
+  return Math.max(0, t);
+}
+function timerArrive(i, leg){
+  if (!run) return;
+  const now = Date.now();
+  const prev = run.drops[run.drops.length - 1];
+  if (prev && !prev.depart) prev.depart = now;
+  run.drops.push({ ids: leg.stops.map(s => s.id), seq: seqLabel(leg.stops[0]), seqEnd: seqLabel(leg.stops[leg.stops.length - 1]),
+    title: legTitle(leg), group: leg.stops[0].group || '', n: leg.stops.length, lat: leg.pt.lat, lng: leg.pt.lng, arrive: now, depart: null });
+  run.end = now; saveRuns();
+}
+function timerSkip(i, leg){
+  if (!run) return;
+  const prev = run.drops[run.drops.length - 1];
+  if (prev && !prev.depart) prev.depart = Date.now();
+}
+function timerDepartCheck(cur){
+  if (!run) return;
+  const d = run.drops[run.drops.length - 1];
+  if (d && !d.depart && distM(cur, d) > (settings.arriveFt || 80) / 3.28084 + 20) { d.depart = Date.now(); saveRuns(); }
+}
+function timerPause(){ if (run && !run.pauses.some(p => !p.to)) { run.pauses.push({ from: Date.now(), to: null }); run.end = Date.now(); saveRuns(); } }
+function timerResume(){ if (run) { const op = run.pauses.find(p => !p.to); if (op) op.to = Date.now(); saveRuns(); } }
+function timerFinish(){
+  if (!run) return;
+  const now = Date.now();
+  const prev = run.drops[run.drops.length - 1];
+  if (prev && !prev.depart) prev.depart = now;
+  const op = run.pauses.find(p => !p.to); if (op) op.to = now;
+  run.end = now; run.done = true; saveRuns(); run = null;
+}
+function timerClock(){ return run ? '⏱ ' + fmtDur(activeMs(run.start, Date.now())) : ''; }
+function fmtDur(ms){
+  if (ms == null || !isFinite(ms)) return '–';
+  const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`;
+}
+function fmtDelta(ms){
+  if (ms == null || !isFinite(ms) || Math.abs(ms) < 1000) return '';
+  return `<span class="${ms < 0 ? 'faster' : 'slower'}">${ms < 0 ? '−' : '+'}${fmtDur(Math.abs(ms))}</span>`;
+}
+function dwell(d, r){ return d.depart ? activeMs(d.arrive, d.depart, r) : null; }
+/* Section time = from arriving at its first drop to arriving at the first drop of the next section (includes driving). */
+function sectionTimes(r){
+  const out = [];
+  r.drops.forEach((d, i) => {
+    const last = out[out.length - 1];
+    if (!last || last.group !== (d.group || 'No section')) out.push({ group: d.group || 'No section', start: d.arrive, end: null, drops: 0, pkgN: 0, pkgMs: 0 });
+    const cur = out[out.length - 1];
+    cur.drops++; cur.pkgN += (d.pkg || []).length; cur.pkgMs += pkgMs(d, r);
+    const nx = r.drops[i + 1];
+    out[out.length - 1].end = nx ? nx.arrive : (d.depart || d.arrive);
+  });
+  out.forEach(s => { s.ms = activeMs(s.start, s.end, r); });
+  return out;
+}
+function runTotal(r){ return activeMs(r.start, r.end || r.start, r); }
+function showTimes(idx){
+  const valid = runs.filter(r => r.drops && r.drops.length);
+  let html = `<div class="shead"><h3>📊 Route times</h3><button class="x" data-act="close">×</button></div>`;
+  if (!valid.length) {
+    html += `<p class="stat">No timed runs yet. Times are recorded automatically while 🧭 route guidance is running — start it from the ⋯ menu or a stop's page.</p>`;
+    openSheet('times', html); return;
+  }
+  const r = idx != null && runs[idx] && runs[idx].drops.length ? runs[idx] : valid[valid.length - 1];
+  const ri = valid.indexOf(r);
+  const others = valid.filter(x => x !== r);
+  const prev = valid[ri - 1] || null;
+  const date = new Date(r.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const total = runTotal(r);
+  const prevTotal = prev ? runTotal(prev) : null;
+  const bestTotal = others.filter(x => x.done).reduce((m, x) => Math.min(m, runTotal(x)), Infinity);
+  html += `<select id="t-run">${valid.map((x, k) => `<option value="${runs.indexOf(x)}"${x === r ? ' selected' : ''}>${new Date(x.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} — ${fmtDur(runTotal(x))}${x.done ? '' : ' (unfinished)'}</option>`).join('')}</select>`;
+  html += `<div class="locbox"><div class="stat">${esc(date)} · ${r.drops.length} drops${r.done ? '' : ' · not finished'}</div>
+    <div class="big">${fmtDur(total)}</div>
+    <div class="stat">${prev ? 'vs previous run: ' + (fmtDelta(total - prevTotal) || 'same') : 'First timed run'}${isFinite(bestTotal) ? ' · best finished: ' + fmtDur(bestTotal) : ''}</div>
+    ${(() => { const np = r.drops.reduce((n, d) => n + (d.pkg || []).length, 0); const pm = r.drops.reduce((t, d) => t + pkgMs(d, r), 0);
+      return np ? `<div class="stat">📦 ${np} package${np > 1 ? 's' : ''} · ${fmtDur(pm)} total · ${fmtDur(pm / np)} each on average · route without packages: ${fmtDur(total - pm)}</div>` : '<div class="stat">📦 No packages logged — tap 📦 during guidance when you walk one up.</div>'; })()}
+    <div class="stat">Paused time is not counted.</div></div>`;
+  // sections
+  const secs = sectionTimes(r);
+  const hist = {};
+  others.forEach(x => sectionTimes(x).forEach(s => { (hist[s.group] = hist[s.group] || []).push(s.ms); }));
+  const prevSecs = prev ? Object.fromEntries(sectionTimes(prev).map(s => [s.group, s.ms])) : {};
+  html += `<h3 style="margin:16px 0 0;font-size:16px">Sections</h3><table class="tt"><tr><th>Section</th><th class="r">Time</th><th class="r">vs last</th><th class="r">Best</th></tr>`;
+  secs.forEach(s => {
+    const h = hist[s.group] || [];
+    const best = h.length ? Math.min(...h) : null;
+    html += `<tr><td>${esc(s.group)}<div class="stat" style="font-size:12px">${s.drops} drop${s.drops > 1 ? 's' : ''}${s.pkgN ? ` · 📦 ${s.pkgN} (${fmtDur(s.pkgMs)})` : ''}</div></td><td class="r">${fmtDur(s.ms)}</td><td class="r">${prevSecs[s.group] != null ? fmtDelta(s.ms - prevSecs[s.group]) : ''}</td><td class="r">${best != null ? fmtDur(Math.min(best, s.ms)) : ''}</td></tr>`;
+  });
+  html += `</table>`;
+  // drops
+  const dropHist = {};
+  others.forEach(x => x.drops.forEach(d => { const w = dwell(d, x); if (w != null) (dropHist[d.ids[0]] = dropHist[d.ids[0]] || []).push(w); }));
+  const dw = r.drops.map(d => ({ d, w: dwell(d, r) })).filter(x => x.w != null);
+  const avg = dw.length ? dw.reduce((a, x) => a + x.w, 0) / dw.length : null;
+  html += `<h3 style="margin:16px 0 0;font-size:16px">Drops</h3><div class="stat">Time stopped at each drop (arrive → drive away). Average: ${fmtDur(avg)}</div>`;
+  const slow = dw.slice().sort((a, b) => b.w - a.w).slice(0, 15);
+  html += `<table class="tt"><tr><th>Slowest drops</th><th class="r">Time</th><th class="r">📦</th><th class="r">Usual</th></tr>`;
+  slow.forEach(x => {
+    const h = dropHist[x.d.ids[0]] || [];
+    const usual = h.length ? h.slice().sort((a, b) => a - b)[Math.floor(h.length / 2)] : null;
+    const pm = pkgMs(x.d, r);
+    html += `<tr><td>#${esc(x.d.seq)}${x.d.seqEnd !== x.d.seq ? '–' + esc(x.d.seqEnd) : ''} ${esc(x.d.title)}</td><td class="r">${fmtDur(x.w)}</td><td class="r">${pm ? fmtDur(pm) : ''}</td><td class="r">${usual != null ? fmtDur(usual) : ''}</td></tr>`;
+  });
+  html += `</table>
+    <div class="row"><button class="b" data-act="expruns">Export times (CSV)</button></div>
+    <div class="row"><button class="b danger" data-act="delrun" data-run="${runs.indexOf(r)}">Delete this run</button></div>`;
+  openSheet('times', html);
+}
+function runsCSV(){
+  const rows = [['run_date','run_done','seq','seq_end','section','drop','boxes','arrive','depart','stopped_seconds','packages','package_seconds']];
+  runs.forEach(r => r.drops.forEach(d => rows.push([new Date(r.start).toISOString().slice(0,10), r.done ? 'yes' : 'no', d.seq, d.seqEnd, d.group, d.title, d.n,
+    new Date(d.arrive).toLocaleTimeString(), d.depart ? new Date(d.depart).toLocaleTimeString() : '', d.depart ? Math.round(activeMs(d.arrive, d.depart, r) / 1000) : '',
+    (d.pkg || []).length, Math.round(pkgMs(d, r) / 1000)])));
+  return rows.map(r => r.map(csvCell).join(',')).join('\n');
+}
+
+/* ================= vehicle (LLV) check ================= */
+const CKEY = 'routeMap.checks.v1';
+const DEFAULT_CHECK = [
+  'Tires — pressure, tread, cuts or bulges', 'Wheels — lug nuts present', 'Fluid leaks under vehicle',
+  'Headlights (low & high beam)', 'Turn signals & hazard flashers', 'Brake lights', 'Warning / strobe light (if equipped)',
+  'Mirrors — clean, adjusted, not cracked', 'Windshield & windows — cracks, clean', 'Wipers & washer fluid', 'Horn',
+  'Seat belt', 'Service brakes', 'Parking brake', 'Steering — no excess play',
+  'Doors & latches (driver, cargo)', 'Dashboard warning lights after start', 'Fuel level',
+  'Fire extinguisher / safety kit (if equipped)', 'Body — any new damage'
+];
+let checks = { template: DEFAULT_CHECK.slice(), draft: null, history: [] };
+function loadChecks(){ try { Object.assign(checks, JSON.parse(localStorage.getItem(CKEY)) || {}); } catch(e){} if (!Array.isArray(checks.history)) checks.history = []; }
+function saveChecks(){ if (checks.history.length > 100) checks.history = checks.history.slice(0, 100); try { localStorage.setItem(CKEY, JSON.stringify(checks)); } catch(e){ toast('Could not save the check'); } }
+function newCheck(){
+  const last = checks.history[0];
+  return { id: uid(), start: Date.now(), finished: null, vehicle: last ? last.vehicle : '', odometer: '', notes: '',
+    items: checks.template.map(name => ({ name, st: null, note: '', photos: [] })) };
+}
+function ckPhotoThumbs(item, idx, editable){
+  return item.photos.length ? `<div class="thumbs">${item.photos.map((pid, i) => `<div class="thw"><img class="thumb" data-pid="${esc(pid)}" data-idx="${i}" data-ck="${idx}" alt="Photo ${i + 1}">${editable ? `<button class="thx" data-act="ckdelphoto" data-ck="${idx}" data-pid="${esc(pid)}" aria-label="Delete photo">✕</button>` : ''}</div>`).join('')}</div>` : '';
+}
+let viewingCheck = null;      // a finished check opened from history (read-only)
+function showCheck(keepScroll){
+  viewingCheck = null;
+  if (!checks.draft) { checks.draft = newCheck(); saveChecks(); }
+  const c = checks.draft;
+  const nOk = c.items.filter(x => x.st === 'ok').length, nP = c.items.filter(x => x.st === 'prob').length, nLeft = c.items.filter(x => !x.st).length;
+  let html = `<div class="shead"><h3>🚐 Vehicle check</h3><button class="x" data-act="close">×</button></div>
+    <div class="stat">Started ${new Date(c.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · ${nOk} OK · ${nP} problem${nP === 1 ? '' : 's'} · ${nLeft} left</div>
+    <div class="two"><div><label for="ck-veh">Vehicle #</label><input id="ck-veh" type="text" inputmode="numeric" value="${esc(c.vehicle)}"></div>
+      <div><label for="ck-odo">Odometer</label><input id="ck-odo" type="text" inputmode="numeric" value="${esc(c.odometer)}"></div></div>
+    <div class="row"><button class="b sm" data-act="ckallok">Mark the rest OK</button></div>`;
+  c.items.forEach((it, i) => {
+    html += `<div class="ck"><div class="nm">${i + 1}. ${esc(it.name)}</div>
+      <div class="st">
+        <button data-act="ckst" data-ck="${i}" data-st="ok" class="${it.st === 'ok' ? 'on-ok' : ''}">✓ OK</button>
+        <button data-act="ckst" data-ck="${i}" data-st="prob" class="${it.st === 'prob' ? 'on-prob' : ''}">⚠ Problem</button>
+        <button data-act="ckst" data-ck="${i}" data-st="na" class="${it.st === 'na' ? 'on-na' : ''}">N/A</button>
+      </div>
+      ${it.st === 'prob' ? `<div class="pb"><textarea data-cknote="${i}" placeholder="What's wrong?">${esc(it.note)}</textarea>
+        ${ckPhotoThumbs(it, i, true)}
+        <div class="row"><button class="b sm" data-act="ckphoto" data-ck="${i}">📷 Add photo</button></div></div>` : ''}
+    </div>`;
+  });
+  html += `<label for="ck-notes">Other notes</label><textarea id="ck-notes">${esc(c.notes)}</textarea>
+    <div class="row"><button class="b primary" data-act="ckfinish">Finish &amp; save</button></div>
+    <div class="row"><button class="b" data-act="ckhistory">Past checks (${checks.history.length})</button><button class="b" data-act="cktemplate">Edit checklist</button></div>
+    <div class="row"><button class="b danger sm" data-act="ckdiscard">Discard this check</button></div>
+    <p class="hint">This is a starter list, not the official USPS form. Use "Edit checklist" to match your station's daily vehicle inspection items.</p>`;
+  openSheet('check', html, keepScroll);
+  fillThumbs();
+}
+function checkReport(c){
+  const when = new Date(c.finished || c.start).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const probs = c.items.filter(x => x.st === 'prob');
+  let t = `Vehicle check — ${when}\nVehicle: ${c.vehicle || '—'}   Odometer: ${c.odometer || '—'}\n`;
+  t += probs.length ? `\nPROBLEMS (${probs.length}):\n` + probs.map(x => `- ${x.name}${x.note ? ': ' + x.note : ''}${x.photos.length ? ` [${x.photos.length} photo${x.photos.length > 1 ? 's' : ''}]` : ''}`).join('\n') + '\n' : '\nNo problems found.\n';
+  t += `\nOK: ${c.items.filter(x => x.st === 'ok').length} · N/A: ${c.items.filter(x => x.st === 'na').length} · Not checked: ${c.items.filter(x => !x.st).length}`;
+  if (c.notes) t += `\n\nNotes: ${c.notes}`;
+  return t;
+}
+async function shareCheck(c){
+  const text = checkReport(c);
+  const files = [];
+  try {
+    for (const it of c.items) for (const pid of it.photos) {
+      const rec = await photoGet(pid);
+      if (rec && rec.blob) files.push(new File([rec.blob], `${it.name.split(' ')[0].toLowerCase()}-${files.length + 1}.jpg`, { type: 'image/jpeg' }));
+    }
+  } catch(e){}
+  try {
+    if (files.length && navigator.canShare && navigator.canShare({ files })) { await navigator.share({ text, files }); return; }
+    if (navigator.share) { await navigator.share({ text }); return; }
+  } catch(e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); toast('Report copied — paste it into a text or email'); } catch(e){ toast('Sharing not available here'); }
+}
+function showCheckView(i){
+  const c = checks.history[i]; if (!c) return;
+  viewingCheck = c;
+  let html = `<div class="shead"><h3>🚐 Check · ${esc(new Date(c.finished).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }))}</h3><button class="x" data-act="close">×</button></div>
+    <div class="notes">${esc(checkReport(c))}</div>`;
+  c.items.forEach((it, k) => { if (it.photos.length) html += `<div class="stat" style="margin-top:10px">${esc(it.name)}</div>${ckPhotoThumbs(it, k, false)}`; });
+  html += `<div class="row"><button class="b primary" data-act="ckshare" data-ckh="${i}">Share report</button></div>
+    <div class="row"><button class="b" data-act="ckhistory">Back to past checks</button></div>
+    <div class="row"><button class="b danger sm" data-act="ckdel" data-ckh="${i}">Delete this check</button></div>`;
+  openSheet('checkview', html);
+  fillThumbs();
+}
+function showCheckHistory(){
+  let html = `<div class="shead"><h3>Past vehicle checks</h3><button class="x" data-act="close">×</button></div>`;
+  if (!checks.history.length) html += `<p class="stat">None yet.</p>`;
+  checks.history.forEach((c, i) => {
+    const p = c.items.filter(x => x.st === 'prob').length;
+    html += `<div class="item" data-ckh="${i}"><div class="badge" style="background:${p ? 'var(--danger)' : 'var(--ok)'}">${p ? '⚠' + p : '✓'}</div>
+      <div class="itxt"><div class="a">${esc(new Date(c.finished).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}</div>
+      <div class="s">Vehicle ${esc(c.vehicle || '—')} · ${p ? p + ' problem' + (p > 1 ? 's' : '') : 'no problems'}</div></div></div>`;
+  });
+  html += `<div class="row"><button class="b" data-act="check">Back to today's check</button></div>`;
+  openSheet('checkhist', html);
+}
+function showCheckTemplate(){
+  const html = `<div class="shead"><h3>Edit checklist</h3><button class="x" data-act="close">×</button></div>
+    <p class="hint">One item per line. Changes apply to the next new check.</p>
+    <textarea id="ck-tpl" style="min-height:300px">${esc(checks.template.join('\n'))}</textarea>
+    <div class="row"><button class="b primary" data-act="cktplsave">Save list</button><button class="b" data-act="cktplreset">Reset to starter list</button></div>
+    <div class="row"><button class="b" data-act="check">Back</button></div>`;
+  openSheet('checktpl', html);
+}
+async function addCheckPhotos(idx, files){
+  const c = checks.draft; if (!c || !c.items[idx]) return;
+  toast('Adding photo…', 8000);
+  for (const f of files) {
+    try {
+      const { blob, w, h } = await resizeImage(f);
+      const id = uid();
+      await photoPut({ id, stopId: 'chk:' + c.id, blob, w, h, created: Date.now() });
+      c.items[idx].photos.push(id);
+    } catch(err) { toast('Photo failed: ' + (err && err.message || err), 4000); }
+  }
+  askPersist(); saveChecks(); showCheck(true); toast('Photo added', 1500);
+}
+function allCheckPhotoIds(){
+  const ids = [];
+  [checks.draft, ...checks.history].forEach(c => { if (c) c.items.forEach(it => ids.push(...it.photos)); });
+  return ids;
+}
+
+/* ================= helping fill in the route ================= */
+/* 1) Quick place: drive the route once, one tap per mailbox. */
+const quick = { on: false, id: null, lastBox: null };
+function nextUnplaced(afterId, what){
+  const list = sorted(stops);
+  let i = afterId ? list.findIndex(s => s.id === afterId) + 1 : 0;
+  for (; i < list.length; i++) if (!okPt(list[i][what])) return list[i];
+  return null;
+}
+function startQuick(fromId){
+  const s = fromId ? stops.find(x => x.id === fromId) : nextUnplaced(null, 'box');
+  if (!s) { toast('Every stop already has a mailbox pin'); return; }
+  if (nav.active) endNav();
+  if (editing) cancelForm();
+  closeSheet();
+  quick.on = true; quick.id = s.id;
+  if (watchId == null) toggleLocate();
+  renderQuick();
+}
+function renderQuick(){
+  const el = $('navbar');
+  if (!quick.on) { el.style.display = 'none'; return; }
+  const s = stops.find(x => x.id === quick.id);
+  if (!s) { stopQuick(); return; }
+  const left = stops.filter(x => !okPt(x.box)).length;
+  el.innerHTML = `
+    <div class="nv-top"><span>📍 Quick place · ${left} mailboxes left</span><span>${esc(s.group || '')}</span></div>
+    <div class="nv-main"><div class="nv-txt"><div class="nv-addr">#${esc(seqLabel(s))} ${esc(fullAddr(s)) || '<i>no address</i>'}</div>
+      <div class="nv-sub">${esc(s.name || '')}${okPt(s.box) ? ' · mailbox ✓' : ''}${okPt(s.house) ? ' · house ✓' : ''}</div></div></div>
+    <div class="nv-btns">
+      <button class="primary" data-q="box" style="flex:2">📍 Mailbox here</button>
+      <button data-q="house">🏠 House here</button>
+    </div>
+    <div class="nv-btns">
+      <button data-q="same" ${quick.lastBox ? '' : 'disabled'}>＝ Same box</button>
+      <button data-q="prev">◀</button>
+      <button data-q="skip">Skip ▶</button>
+      <button data-q="done">Done</button>
+    </div>`;
+  el.style.display = 'block';
+}
+function quickNext(){
+  const n = nextUnplaced(quick.id, 'box');
+  if (!n) { toast('That was the last stop without a mailbox pin'); stopQuick(); return; }
+  quick.id = n.id; renderQuick();
+}
+function quickSet(what, pt){
+  const s = stops.find(x => x.id === quick.id); if (!s) return;
+  s[what] = { lat: pt.lat, lng: pt.lng };
+  if (what === 'house') s.houseApprox = false;
+  let extra = 0;
+  if (what === 'box') {
+    quick.lastBox = { lat: pt.lat, lng: pt.lng };
+    if (normType(s.type) === 'cbu' && s.group) {   // cluster box: every following stop in the same section shares it
+      const list = sorted(stops); let i = list.indexOf(s) + 1;
+      while (i < list.length && list[i].group === s.group && normType(list[i].type) === 'cbu') {
+        if (!okPt(list[i].box)) { list[i].box = { lat: pt.lat, lng: pt.lng }; extra++; }
+        quick.id = list[i].id; i++;
+      }
+    }
+  }
+  save(); renderMarkers();
+  settings.lastId = s.id; saveSettings();
+  toast(`${what === 'box' ? 'Mailbox' : 'House'} placed for #${seqLabel(s)}${extra ? ` + ${extra} more boxes in ${s.group}` : ''}`, 2200);
+  if (what === 'box') quickNext(); else renderQuick();
+}
+function quickGPS(what){
+  toast('Getting GPS fix…', 6000);
+  navigator.geolocation.getCurrentPosition(p => {
+    if (p.coords.accuracy > 30) toast(`GPS is rough right now (±${Math.round(p.coords.accuracy * 3.28)} ft) — check the pin later`, 3500);
+    quickSet(what, { lat: p.coords.latitude, lng: p.coords.longitude });
+  }, err => toast('GPS failed: ' + err.message, 3500), { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+}
+function stopQuick(){ quick.on = false; $('navbar').style.display = 'none'; }
+
+/* 2) Auto-place houses from OpenStreetMap address data (approximate; only exact house-number matches). */
+const auto = { running: false, cancel: false };
+async function autoPlaceHouses(){
+  if (auto.running) return;
+  if (!navigator.onLine) { toast('Needs reception'); return; }
+  const todo = sorted(stops).filter(s => !okPt(s.house) && /^\s*\d+/.test(s.address) && !/\?/.test(s.address));
+  if (!todo.length) { toast('No unplaced houses with a usable address'); return; }
+  if (!confirm(`Look up ${todo.length} addresses on OpenStreetMap?\n\nTakes about ${Math.ceil(todo.length * 1.1 / 60)} minute(s) — the free service allows 1 lookup per second. Keep the app open with reception.\n\nOnly exact house-number matches are placed, and they're marked "approximate" for you to check. Many rural addresses won't be found.`)) return;
+  const [city, state] = String(settings.area || '').split(',').map(x => x.trim());
+  auto.running = true; auto.cancel = false;
+  $('bannerText').textContent = 'Looking up houses… 0/' + todo.length;
+  $('banner').style.display = 'flex'; $('bannerCancel').textContent = 'Stop';
+  let found = 0, done = 0;
+  for (const s of todo) {
+    if (auto.cancel) break;
+    const num = s.address.match(/^\s*(\d+)/)[1];
+    try {
+      const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=3&countrycodes=us'
+        + '&street=' + encodeURIComponent(s.address) + (city ? '&city=' + encodeURIComponent(city) : '') + (state ? '&state=' + encodeURIComponent(state) : '');
+      const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (r.status === 429) { toast('The lookup service asked us to slow down — stopping. Try again later.', 5000); break; }
+      const j = r.ok ? await r.json() : [];
+      const hit = j.find(x => x.address && String(x.address.house_number || '').split(/[;,\s]/)[0] === num);
+      if (hit) { s.house = { lat: parseFloat(hit.lat), lng: parseFloat(hit.lon) }; s.houseApprox = true; found++; }
+    } catch(e) {}
+    done++;
+    $('bannerText').textContent = `Looking up houses… ${done}/${todo.length} · ${found} found`;
+    if (done % 10 === 0) { save(); renderMarkers(); }
+    await new Promise(res => setTimeout(res, 1100));
+  }
+  save(); renderMarkers();
+  auto.running = false;
+  $('banner').style.display = 'none'; $('bannerCancel').textContent = 'Cancel';
+  toast(`Placed ${found} of ${done} houses. They're marked approximate — check each on satellite view.`, 6000);
+}
+
 /* ----- data / settings ----- */
 function showData(){
   const nb = stops.filter(s => okPt(s.box)).length, nh = stops.filter(s => okPt(s.house)).length;
+  const np = stops.reduce((n, s) => n + s.photos.length, 0);
   const html = `
     <div class="shead"><h3>Data &amp; settings</h3><button class="x" data-act="close">×</button></div>
-    <div class="stat">${stops.length} stops · ${nb} mailboxes placed · ${nh} houses placed</div>
+    <div class="stat">${stops.length} stops · ${nb} mailboxes · ${nh} houses · ${spaces.length} space labels · ${np} photos</div>
+    <div class="row"><button class="b primary" data-act="check">🚐 Vehicle check${checks.draft ? ' (in progress)' : ''}</button></div>
+
+    <div class="locbox"><div class="t">⚡ Fill in pins faster</div>
+      <p class="hint"><b>Quick place:</b> drive the route once and tap one button at each mailbox — it fills the pin from GPS and moves to the next stop. Cluster boxes fill the whole section at once.</p>
+      <div class="row"><button class="b" data-act="quick">📍 Start quick place (${stops.length - nb} left)</button></div>
+      <p class="hint"><b>Auto-place houses:</b> looks up addresses on OpenStreetMap. Approximate, and many rural addresses won't be found — check each one.</p>
+      <div class="row"><button class="b" data-act="autohouse">🏠 Auto-place houses (${stops.length - nh} unplaced)</button></div>
+    </div>
+
+    <div class="locbox"><div class="t">🧭 Route guidance</div>
+      ${settings.navPos ? `<div class="row"><button class="b primary" data-act="navresume">▶ Resume at #${esc(settings.navPos.seq)}</button></div>` : ''}
+      <div class="two" style="align-items:flex-end">
+        <div><label for="s-navstart">Start at seq #</label><input id="s-navstart" type="text" inputmode="decimal" placeholder="1"></div>
+        <div><button class="b" data-act="navstart" style="width:100%">▶ Start</button></div>
+      </div>
+      <label for="s-navto">Guide me to</label>
+      <select id="s-navto">
+        <option value="auto"${settings.navTo !== 'house' ? ' selected' : ''}>Mailboxes (house if no mailbox pin)</option>
+        <option value="house"${settings.navTo === 'house' ? ' selected' : ''}>Houses (mailbox if no house pin)</option>
+      </select>
+      <label for="s-arrive">Count as arrived within</label>
+      <select id="s-arrive">${[50, 80, 120, 200].map(f => `<option value="${f}"${+settings.arriveFt === f ? ' selected' : ''}>${f} feet</option>`).join('')}</select>
+      <label class="chk"><input type="checkbox" id="s-voice"${settings.navVoice ? ' checked' : ''}> Voice announcements</label>
+      <label class="chk"><input type="checkbox" id="s-names"${settings.navNames ? ' checked' : ''}> Say customer names</label>
+      <label class="chk"><input type="checkbox" id="s-turns"${settings.navTurns ? ' checked' : ''}> Street-by-street turns (needs reception)</label>
+      <p class="hint">Stops without a pin are skipped. Keep the app open on screen while driving — iPhone stops location for web apps when the screen locks or you switch apps.</p>
+      <div class="row"><button class="b" data-act="times">📊 Route times</button></div>
+    </div>
+
+    <div class="locbox"><div class="t">🏷 Space numbers</div>
+      <p class="hint">Labels for RV spaces and similar — shown on the map only, never connected by lines. Hidden when zoomed out.</p>
+      <div class="row"><button class="b" data-act="labels">Add / edit space numbers</button></div>
+      ${spaces.length ? `<div class="row"><button class="b danger sm" data-act="wipespaces">Delete all ${spaces.length} space labels</button></div>` : ''}
+    </div>
+
     <label for="s-area">Area added to address lookups</label>
     <input id="s-area" type="text" value="${esc(settings.area)}">
     <label class="chk"><input type="checkbox" id="s-line"${settings.showLine ? ' checked' : ''}> Show line of travel (by seq #)</label>
+    <label for="s-labels">Numbers shown on pins</label>
+    <select id="s-labels">
+      <option value="mixed"${settings.labels === 'mixed' ? ' selected' : ''}>Mailboxes: seq # · Houses: seq # + house #</option>
+      <option value="num"${settings.labels === 'num' ? ' selected' : ''}>House # on everything</option>
+      <option value="seq"${settings.labels === 'seq' ? ' selected' : ''}>Seq # on everything</option>
+    </select>
     <div class="legend">${Object.keys(TYPES).map(k => `<span><i class="t-${k}"></i>${TYPES[k]}</span>`).join('')}<span><span class="sq"></span>House / package drop</span></div>
-    <p class="hint">Use the layers button (top right of map) to show only mailboxes or only houses.</p>
+    <p class="hint">Use the layers button (top right of map) to show only mailboxes, houses, or space numbers.</p>
     <div class="row"><button class="b" data-act="fit">Zoom to all</button><button class="b" data-act="renum">Renumber 1…${stops.length}</button></div>
-    <div class="row"><button class="b" data-act="expjson">Backup (JSON)</button><button class="b" data-act="expcsv">Export CSV</button></div>
-    <div class="row"><button class="b" data-act="import">Import JSON / CSV</button></div>
-    <p class="hint">CSV columns: seq, group, address, unit, name, type, notes, box_lat, box_lng, house_lat, house_lng, biz_name, biz_days (e.g. "Mon Tue Wed" or "Mon-Fri"), biz_open, biz_close (24-hr, e.g. 09:00), biz_note. Only address or a location is required.</p>
-    <p class="hint">Data is stored only on this device. Back up after each day of placing pins.</p>
+    <div class="row"><button class="b" data-act="expjson">Backup (no photos)</button><button class="b" data-act="expjsonp">Backup + photos</button></div>
+    <div class="row"><button class="b" data-act="expcsv">Export CSV</button><button class="b" data-act="import">Import JSON / CSV</button></div>
+    <p class="hint">CSV columns: seq, group, address, unit, name, type, notes, box_lat, box_lng, house_lat, house_lng, biz_name, biz_days (e.g. "Mon-Fri"), biz_open, biz_close (24-hr, e.g. 09:00), biz_note. Only address or a location is required. Space labels, photos and times are only in the JSON backups.</p>
+    <p class="hint">Everything is stored only on this phone. Back up after each day of placing pins.</p>
     <div class="row"><button class="b danger" data-act="wipe">Delete all stops</button></div>`;
   openSheet('data', html);
 }
@@ -685,37 +1932,71 @@ function fromCSV(text){
     box_lat: g(r, ci.box_lat), box_lng: g(r, ci.box_lng), house_lat: g(r, ci.house_lat), house_lng: g(r, ci.house_lng),
     biz_name: g(r, ci.biz_name), biz_days: g(r, ci.biz_days), biz_open: g(r, ci.biz_open), biz_close: g(r, ci.biz_close), biz_note: g(r, ci.biz_note) }));
 }
+async function backupJSON(withPhotos){
+  const out = { version: 4, exported: new Date().toISOString(), stops, spaces, runs, checks };
+  if (withPhotos) {
+    toast('Preparing backup with photos…', 15000);
+    try {
+      const all = await photoAll();
+      const live = new Set([...stops.flatMap(s => s.photos), ...allCheckPhotoIds()]);
+      out.photos = [];
+      for (const p of all) if (live.has(p.id)) out.photos.push({ id: p.id, stopId: p.stopId, w: p.w, h: p.h, created: p.created, data: await blobToDataURL(p.blob) });
+    } catch(e) { toast('Could not read photos: ' + e.message, 4000); return; }
+  }
+  deliver(`route-backup-${withPhotos ? 'photos-' : ''}${stamp()}.json`, JSON.stringify(out), 'application/json');
+}
+async function cleanupOrphanPhotos(){
+  try {
+    const live = new Set([...stops.flatMap(s => s.photos), ...allCheckPhotoIds()]);
+    const all = await photoAll();
+    for (const p of all) if (!live.has(p.id)) await photoDel(p.id);
+  } catch(e){}
+}
 $('fileIn').addEventListener('change', async ev => {
   const f = ev.target.files[0]; ev.target.value = '';
   if (!f) return;
   try {
     const text = await f.text();
-    let incoming;
+    let incoming, j = null;
     if (/\.json$/i.test(f.name) || /^\s*[\[{]/.test(text)) {
-      const j = JSON.parse(text);
+      j = JSON.parse(text);
       const arr = Array.isArray(j) ? j : j.stops;
       if (!Array.isArray(arr)) throw new Error('Expected a list of stops');
       incoming = arr.map(cleanStop);
     } else incoming = fromCSV(text);
     if (!incoming.length) { toast('Nothing to import'); return; }
-    if (stops.length && confirm(`Import ${incoming.length} stops.\n\nOK = REPLACE the ${stops.length} existing stops\nCancel = ADD to existing`)) stops = incoming;
+    const replace = stops.length && confirm(`Import ${incoming.length} stops.\n\nOK = REPLACE the ${stops.length} existing stops\nCancel = ADD to existing`);
+    if (replace) stops = incoming;
     else {
       const ids = new Set(stops.map(s => s.id));
       incoming.forEach(s => { if (ids.has(s.id)) s.id = uid(); });
       stops = stops.concat(incoming);
     }
-    save(); renderMarkers();
+    if (j && !Array.isArray(j)) {
+      if (Array.isArray(j.spaces)) { const sp = j.spaces.map(cleanSpace).filter(Boolean); spaces = replace ? sp : spaces.concat(sp); saveSpaces(); }
+      if (Array.isArray(j.runs) && replace) { runs = j.runs; saveRuns(); }
+      if (j.checks && replace && Array.isArray(j.checks.history)) { checks = Object.assign({ template: DEFAULT_CHECK.slice(), draft: null, history: [] }, j.checks); saveChecks(); }
+      if (Array.isArray(j.photos) && j.photos.length) {
+        toast('Restoring photos…', 15000);
+        if (replace) await photoClear();
+        for (const p of j.photos) { try { await photoPut({ id: p.id, stopId: p.stopId, w: p.w, h: p.h, created: p.created, blob: await dataURLToBlob(p.data) }); } catch(e){} }
+        askPersist();
+      }
+    }
+    save(); renderMarkers(); renderSpaces();
+    if (replace) cleanupOrphanPhotos();
     toast(`Imported ${incoming.length} stops`);
     showData();
   } catch(e) { toast('Import failed: ' + e.message, 4000); }
 });
 
-/* ================= my location ================= */
+/* ================= my location (◎ button) ================= */
 function toggleLocate(){
   const btn = $('btnLocate');
+  if (nav.active) { nav.follow = true; if (nav.pos) map.setView([nav.pos.lat, nav.pos.lng], Math.max(map.getZoom(), 17)); renderNav(); return; }
   if (watchId != null) {
     navigator.geolocation.clearWatch(watchId); watchId = null;
-    if (userDot) { map.removeLayer(userDot); map.removeLayer(userAcc); userDot = userAcc = null; }
+    removeUserDot();
     btn.classList.remove('on');
     return;
   }
@@ -723,10 +2004,7 @@ function toggleLocate(){
   btn.classList.add('on'); firstFix = true;
   watchId = navigator.geolocation.watchPosition(p => {
     const ll = [p.coords.latitude, p.coords.longitude];
-    if (!userDot) {
-      userAcc = L.circle(ll, { radius: p.coords.accuracy, color: '#3b9cff', weight: 1, fillOpacity: .12, interactive: false }).addTo(map);
-      userDot = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#3b9cff', fillOpacity: 1, interactive: false }).addTo(map);
-    } else { userDot.setLatLng(ll); userAcc.setLatLng(ll).setRadius(p.coords.accuracy); }
+    updateUserDot(ll, p.coords.accuracy);
     if (firstFix) { map.flyTo(ll, 17, { duration: .6 }); firstFix = false; }
   }, err => { toast('Location error: ' + err.message, 3500); toggleLocate(); },
   { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
@@ -734,9 +2012,18 @@ function toggleLocate(){
 
 /* ================= events ================= */
 $('sheet').addEventListener('click', ev => {
-  const item = ev.target.closest('.item');
-  if (item) { showDetail(item.dataset.id); return; }
+  const th = ev.target.closest('img.thumb');
+  if (th) {
+    let list;
+    if (th.dataset.ck != null) { const c = sheetMode === 'checkview' ? viewingCheck : checks.draft; list = c && c.items[+th.dataset.ck] ? c.items[+th.dataset.ck].photos : []; }
+    else list = sheetMode === 'form' && editing ? editing.photos : ((stops.find(x => x.id === selectedId) || {}).photos || []);
+    if (list.length) openViewer(list, +th.dataset.idx || 0);
+    return;
+  }
   const b = ev.target.closest('[data-act]');
+  const item = ev.target.closest('.item');
+  if (!b && item && item.dataset.ckh != null) { showCheckView(+item.dataset.ckh); return; }
+  if (!b && item) { showDetail(item.dataset.id); return; }
   if (!b) return;
   const id = b.dataset.id, what = b.dataset.what;
   const s = id ? stops.find(x => x.id === id) : null;
@@ -746,6 +2033,7 @@ $('sheet').addEventListener('click', ev => {
     case 'more': listCap += 300; showList(true); break;
     case 'edit': startForm(id); break;
     case 'after': startForm(null, id); break;
+    case 'navhere': startNav({ id }); break;
     case 'prev': case 'next': { const n = neighbor(id, b.dataset.act === 'next' ? 1 : -1); if (n) showDetail(n.id); else toast('End of route'); break; }
     case 'go': if (s && okPt(s[what])) map.flyTo([s[what].lat, s[what].lng], 18, { duration: .6 }); break;
     case 'nav': if (s && okPt(s[what])) window.location.href = `https://maps.apple.com/?daddr=${s[what].lat},${s[what].lng}&dirflg=d`; break;
@@ -761,34 +2049,140 @@ $('sheet').addEventListener('click', ev => {
     case 'sameprev': samePrev(); break;
     case 'geo': geocode(); break;
     case 'clearloc': readForm(); editing[what] = null; updateTemps(); showForm(); break;
-    case 'save': saveForm(); break;
-    case 'cancel': { const back = editing && editing.id; endForm(); renderMarkers(); back ? showDetail(back) : closeSheet(); break; }
+    case 'addphoto': readForm(); photoTarget = { kind: 'stop' }; $('photoIn').click(); break;
+    case 'delphoto': {
+      if (!editing || !confirm('Remove this photo?')) break;
+      const pid = b.dataset.pid;
+      readForm();
+      editing.photos = editing.photos.filter(x => x !== pid);
+      if (editing.addedPhotos.includes(pid)) { editing.addedPhotos = editing.addedPhotos.filter(x => x !== pid); photoDel(pid).catch(() => {}); }
+      else editing.removedPhotos.push(pid);
+      showForm(); break;
+    }
+    case 'save': saveForm(false); break;
+    case 'savenext': saveForm(true); break;
+    case 'cancel': cancelForm(); break;
     case 'del': {
       if (!confirm('Delete this stop?')) break;
-      stops = stops.filter(x => x.id !== editing.id); save();
+      const did = editing.id;
+      [...editing.photos, ...editing.removedPhotos].forEach(pid => photoDel(pid).catch(() => {}));
+      stops = stops.filter(x => x.id !== did); save();
+      photoDelFor(did).catch(() => {});
       endForm(); renderMarkers(); toast('Deleted'); showList(); break;
     }
+    case 'navstart': { const v = parseFloat(($('s-navstart') || {}).value); startNav({ seq: isFinite(v) ? v : 1 }); break; }
+    case 'navresume': if (settings.navPos) startNav({ id: settings.navPos.id, resume: true }); break;
+    case 'times': showTimes(); break;
+    case 'expruns': deliver(`route-times-${stamp()}.csv`, runsCSV(), 'text/csv'); break;
+    case 'delrun': {
+      const k = +b.dataset.run;
+      if (!runs[k] || !confirm('Delete this run\'s times?')) break;
+      runs.splice(k, 1); saveRuns(); showTimes(); break;
+    }
+    case 'pkgtoday': showPkgToday(); break;
+    case 'pkfind': {
+      const lines = ($('pk-in').value || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+      const res = lines.map(matchAddress).filter(Boolean);
+      if (!res.length) { toast('Couldn\'t find a house number in that — try typing it, e.g. 18760 Cypress Rd', 3500); break; }
+      const ids = todayPkgs().slice();
+      res.forEach(r => { if (r.cands.length === 1) { r.added = r.cands[0]; ids.push(r.added.id); } });
+      setTodayPkgs(ids); pkgResults = res; renderMarkers(); showPkgToday();
+      break;
+    }
+    case 'pkpick': { const r = pkgResults[+b.dataset.k]; if (r && s) { r.added = s; setTodayPkgs(todayPkgs().concat(s.id)); renderMarkers(); } showPkgToday(); break; }
+    case 'pkrm': ev.stopPropagation(); setTodayPkgs(todayPkgs().filter(x => x !== id)); renderMarkers(); showPkgToday(); break;
+    case 'pkclear': if (confirm('Clear today\'s package list?')) { setTodayPkgs([]); pkgResults = []; renderMarkers(); showPkgToday(); } break;
+    case 'pktoggle': if (s) { const t = todayPkgs(); setTodayPkgs(t.includes(s.id) ? t.filter(x => x !== s.id) : t.concat(s.id)); renderMarkers(); showDetail(s.id); } break;
+    case 'pkgplus': if (s) { s.pkgManual = (s.pkgManual || 0) + 1; save(); showDetail(s.id); toast('Package logged'); } break;
+    case 'pkgminus': if (s && s.pkgManual) { s.pkgManual--; save(); showDetail(s.id); } break;
+    case 'confirmhouse': if (s) { s.houseApprox = false; save(); renderMarkers(); showDetail(s.id); } break;
+    case 'quick': startQuick(); break;
+    case 'autohouse': closeSheet(); autoPlaceHouses(); break;
+    /* vehicle check */
+    case 'check': showCheck(); break;
+    case 'ckst': {
+      const c = checks.draft, k = +b.dataset.ck; if (!c || !c.items[k]) break;
+      c.items[k].st = c.items[k].st === b.dataset.st ? null : b.dataset.st;
+      saveChecks(); showCheck(true); break;
+    }
+    case 'ckallok': if (checks.draft) { checks.draft.items.forEach(it => { if (!it.st) it.st = 'ok'; }); saveChecks(); showCheck(true); } break;
+    case 'ckphoto': photoTarget = { kind: 'chk', idx: +b.dataset.ck }; $('photoIn').click(); break;
+    case 'ckdelphoto': {
+      const c = checks.draft, k = +b.dataset.ck; if (!c || !c.items[k] || !confirm('Remove this photo?')) break;
+      c.items[k].photos = c.items[k].photos.filter(x => x !== b.dataset.pid); photoDel(b.dataset.pid).catch(() => {});
+      saveChecks(); showCheck(true); break;
+    }
+    case 'ckfinish': {
+      const c = checks.draft; if (!c) break;
+      const left = c.items.filter(x => !x.st).length;
+      if (left && !confirm(`${left} item${left > 1 ? 's' : ''} not checked yet. Save anyway?`)) break;
+      c.finished = Date.now(); checks.history.unshift(c); checks.draft = null; saveChecks();
+      const probs = c.items.filter(x => x.st === 'prob').length;
+      toast(probs ? `Saved — ${probs} problem${probs > 1 ? 's' : ''} noted` : 'Saved — no problems', 3000);
+      showCheckView(0); break;
+    }
+    case 'ckdiscard':
+      if (checks.draft && confirm('Discard this check and its photos?')) {
+        checks.draft.items.forEach(it => it.photos.forEach(pid => photoDel(pid).catch(() => {})));
+        checks.draft = null; saveChecks(); closeSheet();
+      }
+      break;
+    case 'ckhistory': showCheckHistory(); break;
+    case 'ckshare': { const c = checks.history[+b.dataset.ckh]; if (c) shareCheck(c); break; }
+    case 'ckdel': {
+      const k = +b.dataset.ckh, c = checks.history[k];
+      if (!c || !confirm('Delete this check and its photos?')) break;
+      c.items.forEach(it => it.photos.forEach(pid => photoDel(pid).catch(() => {})));
+      checks.history.splice(k, 1); saveChecks(); showCheckHistory(); break;
+    }
+    case 'cktemplate': showCheckTemplate(); break;
+    case 'cktplsave': {
+      const items = $('ck-tpl').value.split('\n').map(x => x.trim()).filter(Boolean);
+      if (!items.length) { toast('The list is empty'); break; }
+      checks.template = items; saveChecks(); toast('Checklist saved — used for your next new check'); showCheck(); break;
+    }
+    case 'cktplreset': if (confirm('Reset to the starter list?')) { checks.template = DEFAULT_CHECK.slice(); saveChecks(); showCheckTemplate(); } break;
+    case 'labels': setLabelMode(true); break;
+    case 'wipespaces': if (confirm(`Delete all ${spaces.length} space labels?`)) { spaces = []; saveSpaces(); renderSpaces(); showData(); } break;
     case 'fit': fitAll(); break;
     case 'renum':
       if (confirm(`Renumber all ${stops.length} stops 1…${stops.length} in their current order? This clears decimals and gaps.`)) { renumber(); save(); renderMarkers(); toast('Renumbered'); showData(); }
       break;
-    case 'expjson': deliver(`route-backup-${stamp()}.json`, JSON.stringify({ version: 2, exported: new Date().toISOString(), stops }, null, 2), 'application/json'); break;
+    case 'expjson': backupJSON(false); break;
+    case 'expjsonp': backupJSON(true); break;
     case 'expcsv': deliver(`route-${stamp()}.csv`, toCSV(), 'text/csv'); break;
     case 'import': $('fileIn').click(); break;
     case 'wipe':
-      if (stops.length && confirm(`Delete all ${stops.length} stops?`) && confirm('Are you sure? This cannot be undone unless you have a backup.')) {
-        stops = []; save(); renderMarkers(); showData(); toast('All stops deleted');
+      if (stops.length && confirm(`Delete all ${stops.length} stops and their photos?`) && confirm('Are you sure? This cannot be undone unless you have a backup.')) {
+        stops = []; save(); photoClear().catch(() => {}); renderMarkers(); showData(); toast('All stops deleted');
       }
       break;
   }
 });
 $('sheet').addEventListener('change', ev => {
-  if (ev.target.id === 's-line') { settings.showLine = ev.target.checked; saveSettings(); renderLine(); }
-  if (ev.target.id === 'f-type' && editing) { readForm(); updateTemps(); }
-  if (ev.target.id === 'f-isbiz') $('bizfields').style.display = ev.target.checked ? 'block' : 'none';
-  if (ev.target.dataset && ev.target.dataset.day != null) ev.target.parentNode.classList.toggle('on', ev.target.checked);
+  const t = ev.target;
+  if (t.id === 's-line') { settings.showLine = t.checked; saveSettings(); renderLine(); }
+  if (t.id === 's-labels') { settings.labels = t.value; saveSettings(); renderMarkers(); }
+  if (t.id === 's-navto') { settings.navTo = t.value; saveSettings(); }
+  if (t.id === 's-arrive') { settings.arriveFt = +t.value; saveSettings(); }
+  if (t.id === 's-voice') { settings.navVoice = t.checked; saveSettings(); }
+  if (t.id === 's-names') { settings.navNames = t.checked; saveSettings(); }
+  if (t.id === 's-turns') { settings.navTurns = t.checked; saveSettings(); }
+  if (t.id === 't-run') showTimes(+t.value);
+  if (t.id === 'f-type' && editing) { readForm(); updateTemps(); }
+  if (t.id === 'f-isbiz') $('bizfields').style.display = t.checked ? 'block' : 'none';
+  if (t.dataset && t.dataset.day != null) t.parentNode.classList.toggle('on', t.checked);
 });
+let ckSaveT;
 $('sheet').addEventListener('input', ev => {
+  const t = ev.target;
+  if (checks.draft && (t.id === 'ck-veh' || t.id === 'ck-odo' || t.id === 'ck-notes' || t.dataset.cknote != null)) {
+    if (t.id === 'ck-veh') checks.draft.vehicle = t.value.trim();
+    else if (t.id === 'ck-odo') checks.draft.odometer = t.value.trim();
+    else if (t.id === 'ck-notes') checks.draft.notes = t.value;
+    else { const it = checks.draft.items[+t.dataset.cknote]; if (it) it.note = t.value; }
+    clearTimeout(ckSaveT); ckSaveT = setTimeout(saveChecks, 400);
+  }
   if (ev.target.id === 's-area') { settings.area = ev.target.value; saveSettings(); }
   if (ev.target.id === 'f-seq' && editing) { readForm(); updateTemps(); }
 });
@@ -810,22 +2204,26 @@ $('q').addEventListener('keydown', ev => {
     if (pts.length > 1) map.fitBounds(pts, { padding: [50,50], maxZoom: 17 });
   }
 });
-$('btnList').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'list' ? closeSheet() : (listCap = 300, showList()); });
-$('btnAdd').addEventListener('click', () => { if (editing) return; startForm(null); });
+$('btnPkg').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'pkg' ? closeSheet() : (pkgResults = [], showPkgToday()); });
+$('btnList').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'list' ? closeSheet() : showList(); });
+$('btnAdd').addEventListener('click', () => { if (editing) return; if (labelMode) setLabelMode(false); startForm(null); });
 $('btnLocate').addEventListener('click', toggleLocate);
 $('btnData').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'data' ? closeSheet() : showData(); });
-$('bannerCancel').addEventListener('click', () => setTap(null));
+$('bannerCancel').addEventListener('click', () => { if (auto.running) { auto.cancel = true; return; } setTap(null); });
 
 /* ================= offline support ================= */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
-window.addEventListener('offline', () => toast('No reception — your stops and GPS still work. Only map areas you\'ve viewed before will show.', 5000));
+window.addEventListener('offline', () => toast('No reception — stops, GPS and voice guidance still work. Street turns and unseen map areas won\'t.', 5000));
 window.addEventListener('online', () => toast('Back online'));
 
 /* ================= init ================= */
 load();
+loadChecks();
 renderMarkers();
+renderSpaces();
+zoomClass();
 if (stops.some(anyPt)) fitAll();
 })();
 </script>
