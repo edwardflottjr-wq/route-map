@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14181d">
+<title>Route Map Guide</title>
+<style>
+  :root{
+    --bg:#14181d; --panel:#1d232b; --panel2:#262e38; --text:#eef1f4; --muted:#9aa6b2;
+    --accent:#3b9cff; --danger:#ff5a5a; --ok:#3ccf7a; --border:#33404d; --warn:#f5a623;
+    --curb:#3b9cff; --cbu:#f5a623; --door:#3ccf7a; --po:#b57bff; --house:#f2f2f2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    padding:0 0 calc(env(safe-area-inset-bottom) + 40px)}
+  .top{position:sticky;top:0;z-index:5;background:rgba(20,24,29,.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;display:flex;align-items:center;gap:10px}
+  .top a.back{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;background:var(--accent);color:#fff;
+    font-weight:700;text-decoration:none;font-size:15px;flex:none}
+  .top h1{font-size:18px;margin:0;flex:1}
+  main{max-width:680px;margin:0 auto;padding:0 16px}
+  .intro{color:var(--muted);margin:16px 0 8px}
+  nav.toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+  nav.toc a{padding:7px 11px;border-radius:999px;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    text-decoration:none;font-size:14px;font-weight:600}
+  section{margin-top:26px;padding-top:6px;scroll-margin-top:calc(env(safe-area-inset-top) + 70px)}
+  h2{font-size:21px;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+  h3{font-size:16px;margin:18px 0 4px}
+  p{margin:6px 0}
+  ol,ul{margin:6px 0;padding-left:22px}
+  li{margin:4px 0}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .tip{background:rgba(59,156,255,.12);border:1px solid rgba(59,156,255,.4);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:15px}
+  .warn{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.45);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:15px}
+  .tip b:first-child,.warn b:first-child{display:block;margin-bottom:2px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:28px;padding:0 8px;border-radius:8px;
+    background:var(--panel2);border:1px solid var(--border);font-weight:700;font-size:14px;vertical-align:middle;white-space:nowrap}
+  .btn.p{background:var(--accent);border-color:var(--accent);color:#fff}
+  .legend{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:8px 0}
+  .pin{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:28px;padding:0 6px;border-radius:14px;border:2px solid #fff;
+    font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;position:relative}
+  .hpin{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:26px;padding:0 5px;border-radius:5px;border:2px solid #222;
+    background:var(--house);font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;position:relative}
+  .hpin .hs{color:#666;font-weight:600;margin-right:2px}
+  .t-curb{background:var(--curb)} .t-cbu{background:var(--cbu)} .t-door{background:var(--door)} .t-po{background:var(--po)}
+  .done{opacity:.35;filter:grayscale(1)}
+  .approx{border-style:dashed;border-color:#f5a623;background:#fff6e0}
+  .pk{box-shadow:0 0 0 3px #f5a623}
+  .pkf{position:absolute;top:-10px;right:-9px;font-size:13px}
+  .spl{display:inline-block;font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;background:rgba(255,255,255,.88);border:1px solid #555;border-radius:4px;padding:3px 5px}
+  .mock{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:10px;margin:10px 0}
+  .mock .top2{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  .mock .main{display:flex;align-items:center;gap:10px;margin-top:4px}
+  .mock .arrow{width:44px;height:44px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;flex:none}
+  .mock .addr{font-weight:700;font-size:17px} .mock .sub{color:var(--muted);font-size:13px}
+  .mock .dist{margin-left:auto;font-weight:800;font-size:19px}
+  .mock .pkline{margin-top:8px;padding:7px 10px;border-radius:9px;background:#f5a623;color:#111;font-weight:800;font-size:14px}
+  .mock .btns{display:flex;gap:5px;margin-top:8px}
+  .mock .btns span{flex:1;display:flex;align-items:center;justify-content:center;min-height:38px;border-radius:9px;background:var(--panel2);border:1px solid var(--border);font-weight:700}
+  table{width:100%;border-collapse:collapse;font-size:15px;margin:6px 0}
+  td{padding:7px 4px;border-bottom:1px solid var(--border);vertical-align:top}
+  td:first-child{white-space:nowrap;width:1%;padding-right:10px}
+  .muted{color:var(--muted)}
+  .hdr{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+  footer{margin-top:34px;color:var(--muted);font-size:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="back" href="route-map.html">← Map</a>
+  <h1>How to use Route Map</h1>
+</div>
+<main>
+  <p class="intro">Everything the app does, in the order you'll use it. Tap a topic to jump to it.</p>
+  <nav class="toc">
+    <a href="#start">Getting started</a><a href="#screen">The screen</a><a href="#pins">Pins</a><a href="#stops">Adding &amp; editing</a>
+    <a href="#fast">Filling in fast</a><a href="#spaces">RV spaces</a><a href="#guide">Route guidance</a><a href="#packages">Packages</a>
+    <a href="#stats">Stats &amp; path</a><a href="#check">Vehicle check</a><a href="#offline">Offline &amp; backups</a><a href="#trouble">Troubleshooting</a>
+  </nav>
+
+  <section id="start">
+    <h2>🚀 Getting started</h2>
+    <ol>
+      <li>Open the app from its <b>Home Screen icon</b> (not from Safari). The Home Screen app and Safari keep separate data.</li>
+      <li>Allow location when it asks.</li>
+      <li>First time only: tap <span class="btn">⋯</span> → <b>Import JSON / CSV</b> and choose your route file. Your stops load in delivery order.</li>
+      <li>Once, with Wi-Fi, scroll the map along your whole route in both <b>Street</b> and <b>Satellite</b> views (layers button, top right). That saves the map for areas without service.</li>
+    </ol>
+    <div class="tip"><b>Back up often</b>Everything lives only on your phone. Tap <span class="btn">⋯</span> → <b>Backup + photos</b> at the end of any day you add pins or photos, and save it to Files or iCloud.</div>
+  </section>
+
+  <section id="screen">
+    <h2>📱 The screen</h2>
+    <div class="hdr"><span class="btn" style="min-width:120px;justify-content:flex-start;color:var(--muted)">Search…</span><span class="btn">📦</span><span class="btn">☰</span><span class="btn">＋</span><span class="btn">◎</span><span class="btn">⋯</span></div>
+    <table>
+      <tr><td><b>Search</b></td><td>Type a house number, street, name, unit (RV12) or seq #. The list filters as you type. Press Enter on a single match to jump to it.</td></tr>
+      <tr><td><span class="btn">📦</span></td><td>Today's packages. The number badge shows how many are waiting.</td></tr>
+      <tr><td><span class="btn">☰</span></td><td>The stop list, grouped by section. It reopens at the last stop you looked at, highlighted in blue.</td></tr>
+      <tr><td><span class="btn">＋</span></td><td>Add a new stop.</td></tr>
+      <tr><td><span class="btn">◎</span></td><td>Show where you are (blue dot). During guidance it re-centers the map on you.</td></tr>
+      <tr><td><span class="btn">⋯</span></td><td>Everything else: route guidance, stats, vehicle check, quick place, space numbers, settings, backups.</td></tr>
+    </table>
+    <p class="muted">The layers button on the map (top right) switches Street / Satellite and shows or hides mailboxes, houses, the box-to-house links, and space numbers.</p>
+  </section>
+
+  <section id="pins">
+    <h2>📍 Reading the pins</h2>
+    <p>Each stop can have <b>two</b> pins: the <b>mailbox</b> (for DPS, flats and small parcels) and the <b>house</b> (where packages go). A dashed line joins them.</p>
+    <div class="legend">
+      <span class="pin t-curb">12</span><span><b>Mailbox</b> — round, shows the seq #. Color = box type.</span>
+      <span class="hpin"><span class="hs">12·</span>18760</span><span><b>House</b> — square, shows seq # · house #.</span>
+      <span style="display:flex;gap:4px"><span class="pin t-curb" style="min-width:22px"> </span><span class="pin t-cbu" style="min-width:22px"> </span><span class="pin t-door" style="min-width:22px"> </span><span class="pin t-po" style="min-width:22px"> </span></span>
+      <span>Curbside · Cluster box (CBU) · Door/porch slot · Parcel locker</span>
+      <span class="pin t-curb done">8</span><span><b>Grey</b> = already done today.</span>
+      <span class="pin t-curb pk">14<span class="pkf">📦</span></span><span><b>Orange ring + 📦</b> = on today's package list.</span>
+      <span class="hpin approx">18501</span><span><b>Dashed orange</b> = house pin was auto-placed and still needs checking.</span>
+      <span class="spl">RV12</span><span><b>Space label</b> — just a marker, not a stop. Hidden when zoomed out.</span>
+    </div>
+    <p class="muted">You can change what the numbers on pins show in <span class="btn">⋯</span> → <b>Numbers shown on pins</b>.</p>
+  </section>
+
+  <section id="stops">
+    <h2>✏️ Adding &amp; editing stops</h2>
+    <p>Tap any pin or list row to open the stop. Tap <b>Edit</b> to change it.</p>
+    <h3>Delivery order</h3>
+    <ul>
+      <li><b>Seq #</b> is the delivery order. Type a number that's already used and the stop is <b>inserted</b> there; everything after moves back one.</li>
+      <li>On a stop's page, <b>＋ Insert after</b> adds a new stop right behind it, in the same section.</li>
+      <li><b>Save &amp; next ▶</b> saves and opens the next stop, so you can work down the route without going back to the list.</li>
+    </ul>
+    <h3>Placing pins</h3>
+    <ul>
+      <li><b>📍 GPS here</b> — most accurate. Stand at the box (or the door) and tap it.</li>
+      <li><b>Tap map</b> — tap the exact spot. Use Satellite view to see the actual box or house.</li>
+      <li><b>Same as prev stop</b> — copies the mailbox from the stop before (handy for boxes on one post).</li>
+      <li><b>Look up address</b> — rough guess only; rural addresses are often off.</li>
+      <li>After placing, <b>drag the pin</b> to fine-tune it.</li>
+    </ul>
+    <h3>Notes, photos, businesses</h3>
+    <ul>
+      <li><b>Notes</b> — dogs, gate codes, where to leave parcels.</li>
+      <li><b>📷 Add photo</b> — take one or pick from your library. Tap a thumbnail to see it full screen. Photos are shrunk to save space.</li>
+      <li><b>This is a business</b> — add the name, days open and hours. The stop then shows <span style="color:var(--ok)">Open now</span> / <span style="color:var(--danger)">Closed now</span>.</li>
+    </ul>
+    <div class="tip"><b>Cluster boxes</b>Place the mailbox for the first unit in an RV park or CBU, then on that stop's page tap <b>"Use this mailbox for … other stops"</b> to fill in the whole section at once.</div>
+  </section>
+
+  <section id="fast">
+    <h2>⚡ Filling in pins fast</h2>
+    <h3>Quick place (best for mailboxes)</h3>
+    <ol>
+      <li><span class="btn">⋯</span> → <b>📍 Start quick place</b>.</li>
+      <li>The panel shows the next stop without a mailbox pin. Pull up to that box and tap <span class="btn p">📍 Mailbox here</span>. It saves from GPS and moves to the next one.</li>
+      <li><span class="btn">🏠 House here</span> places the house pin for the current stop. <span class="btn">＝ Same box</span> reuses the last box spot. <span class="btn">Skip ▶</span> and <span class="btn">◀</span> move through stops.</li>
+      <li>At a cluster box, one tap fills every unit in that section.</li>
+    </ol>
+    <h3>Auto-place houses</h3>
+    <p><span class="btn">⋯</span> → <b>🏠 Auto-place houses</b> looks up your addresses online (about one per second — keep the app open with service). Only exact house-number matches are placed, and they show <b>dashed orange</b> until you check them. Many rural addresses won't be found.</p>
+    <p>To confirm one: open the stop, look at it on Satellite view, then tap <b>✓ House pin is right</b> — or edit and drag it onto the right house.</p>
+  </section>
+
+  <section id="spaces">
+    <h2>🏷 RV space numbers</h2>
+    <ol>
+      <li><span class="btn">⋯</span> → <b>Add / edit space numbers</b>. Zoom in close on the park.</li>
+      <li>Type the first label (for example <b>RV1</b>), then tap the map on each space. The number goes up by one each time: RV1, RV2, RV3…</li>
+      <li>Tap a yellow label to rename or delete it, drag to move it, <b>Undo</b> to remove the last one, <b>Done</b> when finished.</li>
+    </ol>
+    <p class="muted">Labels are never joined by lines, and they hide when you zoom out so the map stays readable.</p>
+  </section>
+
+  <section id="guide">
+    <h2>🧭 Route guidance</h2>
+    <h3>Starting</h3>
+    <ul>
+      <li>From the beginning or any seq #: <span class="btn">⋯</span> → <b>Start at seq #</b> → <span class="btn">▶ Start</span>.</li>
+      <li>From a particular stop: open it → <b>🧭 Guide me from this stop</b>.</li>
+      <li>To continue where you stopped: <span class="btn">⋯</span> → <span class="btn p">▶ Resume at #</span>.</li>
+    </ul>
+    <h3>The guidance panel</h3>
+    <div class="mock">
+      <div class="top2"><span>41 done · 280 left · Cypress Rd</span><span>⏱ 1:12:40 · GPS ±16 ft</span></div>
+      <div class="main"><div class="arrow"><svg width="26" height="26" viewBox="0 0 24 24" style="transform:rotate(30deg)"><path d="M12 2 L20 21 L12 16.5 L4 21 Z" fill="#3b9cff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+        <div><div class="addr">18750 Cypress Rd</div><div class="sub">#3 · Mailbox</div></div><div class="dist">420 ft</div></div>
+      <div class="pkline">📦 Next stop has a package: 18750 Cypress Rd</div>
+      <div class="btns"><span>📦</span><span>◀</span><span>⏸</span><span>▶|</span><span>🔊</span><span>🗺</span><span>✕</span></div>
+    </div>
+    <ul>
+      <li>The <b>arrow</b> points toward the next stop compared to the way you're driving. The distance counts down.</li>
+      <li>The voice says the next stop, warns about 500 ft out (and which side), and says "Arrived" when you get there. It then moves on by itself.</li>
+      <li>Stops at the same spot, like a cluster box, count as one stop.</li>
+      <li>Stops without a pin are skipped.</li>
+    </ul>
+    <table>
+      <tr><td><span class="btn">📦</span></td><td>Package delivery timer (see <a href="#packages" style="color:var(--accent)">Packages</a>).</td></tr>
+      <tr><td><span class="btn">◀</span></td><td>Back one stop.</td></tr>
+      <tr><td><span class="btn">⏸</span> / <span class="btn p">▶</span></td><td>Pause / resume. Paused time isn't counted and your place is saved.</td></tr>
+      <tr><td><span class="btn">▶|</span></td><td>Skip to the next stop — use it if guidance is stuck on a stop you already passed.</td></tr>
+      <tr><td><span class="btn">🔊</span></td><td>Voice on/off.</td></tr>
+      <tr><td><span class="btn">🗺</span></td><td>Open Apple Maps with driving directions to this stop.</td></tr>
+      <tr><td><span class="btn">✕</span></td><td>Stop guidance. Your place is kept for Resume.</td></tr>
+    </table>
+    <h3>Leaving and rejoining the route</h3>
+    <ul>
+      <li>If you head away from all your stops, the panel shows <b style="color:#ffb3b3">↩ Off route</b> and the voice goes quiet. That time and those miles are logged as off-route.</li>
+      <li>When you come back near any stop that isn't done yet, it picks up from there — even if it's a different point on the route.</li>
+      <li><b>Early delivery</b> to a stop further along: stop there for a few seconds and it's marked done. Guidance keeps pointing at where you were in the route, and skips that stop later.</li>
+      <li>If you keep delivering in order from that new spot (two stops in a row), it switches to following you from there.</li>
+      <li>Driving past later stops without stopping doesn't mark them done.</li>
+      <li>Anything you never reached shows as <b>missed</b> in the stats.</li>
+    </ul>
+    <h3>Street-by-street turns (optional)</h3>
+    <p>Turn on in <span class="btn">⋯</span> → <b>Street-by-street turns</b>. It needs service and uses a free online route service, so it can be unavailable. Without it you still get the stop-to-stop voice and arrow.</p>
+    <div class="warn"><b>Keep the app on screen</b>iPhone stops giving location to web apps when the screen locks or you switch apps. Set <b>Settings → Display &amp; Brightness → Auto-Lock → Never</b> while driving, and come back to the app after using Apple Maps. Set things up while parked, and follow your station's rules about phones in the vehicle.</div>
+  </section>
+
+  <section id="packages">
+    <h2>📦 Packages</h2>
+    <h3>Today's packages (from the packing slip)</h3>
+    <ol>
+      <li>Tap <span class="btn">📦</span> at the top of the screen.</li>
+      <li>Tap the text box, tap it again, and choose <b>Scan Text</b>. Point the camera at the address on the slip and tap <b>Insert</b>. Or just type the house number and street.</li>
+      <li>Tap <b>Find on my route</b>. A ✓ means it's added. If two stops share the number, pick the right one.</li>
+    </ol>
+    <p>Flagged stops get an orange ring and 📦 on the map. During guidance you'll see <b>"Next stop has a package"</b> and hear "with a package". When you arrive it shows <b>📦 PACKAGE HERE</b>. You can also flag a stop from its page with <b>＋ Package today</b>. The list clears itself the next day.</p>
+    <h3>Timing a package delivery</h3>
+    <ol>
+      <li>After you arrive, tap <span class="btn">📦</span> as you leave the vehicle. At a cluster box it asks which unit.</li>
+      <li>Tap <span class="btn">📦</span> again when you're back in the vehicle. It says how long it took, and takes the stop off today's list.</li>
+    </ol>
+    <p class="muted">While the package timer runs, guidance won't skip ahead even if you walk near other stops.</p>
+    <h3>Package rating</h3>
+    <p>Every package you time — plus any you add by hand with <b>＋ Log a package</b> on a stop's page — counts toward that address. The busiest address on your route is <b>10/10 📦</b>; the rest are scaled from it. You'll see the rating in the list and on each stop.</p>
+  </section>
+
+  <section id="stats">
+    <h2>📊 Stats &amp; your path</h2>
+    <p>Recorded automatically whenever guidance is running. Open with <span class="btn">⋯</span> → <b>📊 Route stats &amp; charts</b>. Pick a day from the menu at the top.</p>
+    <table>
+      <tr><td><b>Total time</b></td><td>The whole run, not counting pauses, compared with your previous run and your best.</td></tr>
+      <tr><td><b>Miles, driving, stopped</b></td><td>How far you drove, and how the time splits between moving and stopped (boxes, packages, traffic).</td></tr>
+      <tr><td><b>Speeds</b></td><td>Average while driving, average counting stops, and top speed. These are GPS estimates.</td></tr>
+      <tr><td><b>Drops per hour</b></td><td>Your pace.</td></tr>
+      <tr><td><b>Off route</b></td><td>How many times you left the route, for how long and how many miles.</td></tr>
+      <tr><td><b>Out of order / missed</b></td><td>Stops done out of sequence, and stops never reached.</td></tr>
+      <tr><td><b>Charts</b></td><td>Total time for your last 14 runs, and time per section. A white tick marks your best for that section. Tap any bar for details.</td></tr>
+      <tr><td><b>Slowest drops</b></td><td>Where you spent the most time stopped, with package time and your usual time there.</td></tr>
+    </table>
+    <p><span class="btn p">🗺 Show my path on the map</span> draws where you drove that day: <b style="color:var(--accent)">blue</b> on route, <b style="color:var(--danger)">red</b> off route, with a red dot where each detour started. Tap <b>Hide</b> in the banner to clear it.</p>
+    <p class="muted"><b>Export times (CSV)</b> saves every drop's times for a spreadsheet. Stats live only on your phone.</p>
+  </section>
+
+  <section id="check">
+    <h2>🚐 Vehicle check</h2>
+    <ol>
+      <li><span class="btn">⋯</span> → <span class="btn p">🚐 Vehicle check</span>. Enter the vehicle # and odometer.</li>
+      <li>Tap <b>✓ OK</b>, <b>⚠ Problem</b> or <b>N/A</b> for each item. <b>Mark the rest OK</b> fills in anything left.</li>
+      <li>For a problem, describe it and tap <b>📷 Add photo</b>.</li>
+      <li><b>Finish &amp; save</b>, then <b>Share report</b> to text or email it, with photos attached.</li>
+    </ol>
+    <p>Your progress saves as you go, so you can leave and come back. <b>Past checks</b> keeps your history.</p>
+    <div class="warn"><b>Use your station's list</b>The built-in list is a starter list, not the official USPS form. Tap <b>Edit checklist</b> and type your station's items, one per line.</div>
+  </section>
+
+  <section id="offline">
+    <h2>📶 Offline &amp; backups</h2>
+    <h3>Works with no service</h3>
+    <p>Your stops, search, notes, photos, GPS pins, quick place, voice guidance, pause/resume, off-route pickup, timing, path recording, packages, stats and the vehicle check.</p>
+    <h3>Needs service</h3>
+    <p>Street-by-street turns, auto-place houses, address lookup, sharing a report, and map areas you've never viewed before.</p>
+    <h3>Backups</h3>
+    <ul>
+      <li><b>Backup (no photos)</b> — small file: stops, space labels, times, vehicle checks.</li>
+      <li><b>Backup + photos</b> — everything, larger.</li>
+      <li><b>Import JSON / CSV</b> restores a backup. "OK" replaces what's on the phone; "Cancel" adds to it.</li>
+    </ul>
+    <h3>Updating the app</h3>
+    <ol>
+      <li>Upload the new files to your <b>route-map</b> repo on GitHub with exactly the same names (<b>route-map.html</b>, <b>sw.js</b>, <b>help.html</b>). Watch for "route-map 2.html" — rename it first.</li>
+      <li>Wait 2 minutes, open the app with service, close it fully, and open it again.</li>
+    </ol>
+    <p class="muted">Updating never erases your stops — they're stored on the phone, not in the files.</p>
+  </section>
+
+  <section id="trouble">
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><td><b>Stuck on a stop</b></td><td>Tap <span class="btn">▶|</span>. If you're far from the route it will pick up by itself when you get near a stop.</td></tr>
+      <tr><td><b>"GPS signal lost"</b></td><td>It's retrying on its own. Make sure the app is on screen and the phone isn't locked.</td></tr>
+      <tr><td><b>Arrives too early / late</b></td><td>Change <span class="btn">⋯</span> → <b>Count as arrived within</b> (50–200 ft). Phone GPS is usually within 15–30 ft.</td></tr>
+      <tr><td><b>No voice</b></td><td>Check <span class="btn">🔊</span> and the phone's ring/silent switch and volume.</td></tr>
+      <tr><td><b>Blank map in places</b></td><td>That area wasn't viewed with service yet. Your pins still show and GPS still works.</td></tr>
+      <tr><td><b>Stops missing</b></td><td>Make sure you opened the app from the Home Screen icon, not Safari. Restore from your latest backup if needed.</td></tr>
+    </table>
+  </section>
+
+  <footer>Route Map · all data stays on this phone</footer>
+</main>
+</body>
+</html>

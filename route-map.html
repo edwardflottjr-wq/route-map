@@ -176,6 +176,12 @@
   table.tt td{padding:6px 4px;border-bottom:1px solid var(--border);vertical-align:top}
   table.tt td.r,table.tt th.r{text-align:right;white-space:nowrap}
   .faster{color:var(--ok)} .slower{color:var(--danger)}
+  .sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .tile{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:9px 10px}
+  .tile .k{font-size:12px;color:var(--muted)} .tile .v{font-size:20px;font-weight:800;margin-top:2px} .tile .s{font-size:12px;color:var(--muted);margin-top:2px}
+  svg.ch{width:100%;height:auto;display:block;margin-top:8px}
+  svg.ch .ctx{font:600 11px -apple-system,system-ui,sans-serif;fill:var(--text)}
+  svg.ch .ctm{font:500 11px -apple-system,system-ui,sans-serif;fill:var(--muted)}
   .big{font-size:26px;font-weight:800}
 </style>
 </head>
@@ -473,21 +479,66 @@ function pdb(){
   if (photoDB) return Promise.resolve(photoDB);
   return new Promise((res, rej) => {
     let r;
-    try { r = indexedDB.open('routeMapPhotos', 1); } catch(e){ return rej(e); }
-    r.onupgradeneeded = () => { const st = r.result.createObjectStore('photos', { keyPath: 'id' }); st.createIndex('stopId', 'stopId'); };
+    try { r = indexedDB.open('routeMapPhotos', 2); } catch(e){ return rej(e); }
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains('photos')) { const st = db.createObjectStore('photos', { keyPath: 'id' }); st.createIndex('stopId', 'stopId'); }
+      if (!db.objectStoreNames.contains('tracks')) db.createObjectStore('tracks', { keyPath: 'runId' });   // your driven path, one record per run
+    };
     r.onsuccess = () => { photoDB = r.result; res(photoDB); };
     r.onerror = () => rej(r.error);
   });
 }
 /* fn must issue its requests synchronously; resolves when the transaction completes */
-async function pOp(mode, fn){
+async function pOp(mode, fn, storeName){
   const db = await pdb();
+  storeName = storeName || 'photos';
   return new Promise((res, rej) => {
-    const tx = db.transaction('photos', mode);
-    const r = fn(tx.objectStore('photos'));
+    const tx = db.transaction(storeName, mode);
+    const r = fn(tx.objectStore(storeName));
     tx.oncomplete = () => res(r && 'result' in r ? r.result : undefined);
     tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
   });
+}
+/* driven path: points [seconds since run start, lat, lng, offRoute 0/1] */
+const trackGet = runId => pOp('readonly', st => st.get(runId), 'tracks');
+const trackPut = rec => pOp('readwrite', st => st.put(rec), 'tracks');
+const trackDel = runId => pOp('readwrite', st => st.delete(runId), 'tracks');
+const trackAll = () => pOp('readonly', st => st.getAll(), 'tracks');
+const trk = { runId: null, pts: [], last: null, dirty: 0, win: [] };
+function trackBegin(r, resume){
+  trk.runId = r.id; trk.pts = []; trk.last = null; trk.dirty = 0; trk.win = [];
+  if (resume) trackGet(r.id).then(rec => { if (rec && trk.runId === r.id) trk.pts = rec.pts.concat(trk.pts); }).catch(() => {});
+}
+function trackAdd(cur, acc, off){
+  if (!run || trk.runId !== run.id || acc > 40) return;      // skip poor fixes
+  const now = Date.now(), L = trk.last;
+  if (L) {
+    const d = distM(L, cur), dt = (now - L.t) / 1000;
+    if (d < 12 && dt < 20) return;
+    if (dt > 0 && d / dt < 45 && d < 2000) {                  // ignore GPS jumps
+      run.distM = (run.distM || 0) + d;
+      if (d / dt > 1.5 && dt < 120) run.moveMs = (run.moveMs || 0) + (now - L.t);
+      if (off) run.offDistM = (run.offDistM || 0) + d;
+      // top speed: distance covered over the last 3+ seconds (smooths out single-fix GPS noise)
+      trk.win.push({ t: now, d });
+      while (trk.win.length > 1 && now - trk.win[1].t >= 3000) trk.win.shift();
+      const span = (now - trk.win[0].t) / 1000 + dt;
+      if (span >= 3) { const v = trk.win.reduce((a, x) => a + x.d, 0) / span; if (v < 45 && v > (run.maxMps || 0)) run.maxMps = v; }
+    } else trk.win = [];
+  }
+  trk.pts.push([Math.round((now - run.start) / 1000), +cur.lat.toFixed(5), +cur.lng.toFixed(5), off ? 1 : 0]);
+  trk.last = { lat: cur.lat, lng: cur.lng, t: now };
+  if (++trk.dirty >= 25) trackFlush();
+}
+function trackFlush(){
+  if (!trk.runId || !trk.dirty) return;
+  trk.dirty = 0;
+  trackPut({ runId: trk.runId, pts: trk.pts.slice() }).catch(() => {});
+  saveRuns();
+}
+async function trackCleanup(){
+  try { const keep = new Set(runs.map(r => r.id)); for (const t of await trackAll()) if (!keep.has(t.runId)) await trackDel(t.runId); } catch(e){}
 }
 const photoPut = rec => pOp('readwrite', st => st.put(rec));
 const photoGet = id => pOp('readonly', st => st.get(id));
@@ -1229,8 +1280,11 @@ function startNav(o){
   if (watchId != null) toggleLocate();
   closeSheet();
   Object.assign(nav, { legs, i, active: true, paused: false, follow: true, approachSaid: false, pos: null, hPos: null, heading: null,
-    steps: [], route: null, needFetch: true });
+    steps: [], route: null, needFetch: true, off: null, cand: null, thread: null, lost: false, lastFix: Date.now(),
+    line: legs.map(l => l.pt), done: new Set() });
   timerStart(o && o.resume);
+  if (run) run.drops.forEach(d => d.ids.forEach(id => nav.done.add(id)));
+  if (legDone(nav.i)) { const ni = nextUndone(nav.i); nav.i = ni >= 0 ? ni : nextUndone(0); if (nav.i < 0) { nav.active = false; toast('Every placed stop is already done in this run'); return; } }
   say('Starting route.');            // first speech must happen during the tap so iPhone allows it
   navWatchOn(); wakeOn();
   saveNavProgress(); announceLeg(); renderNav();
@@ -1247,53 +1301,145 @@ function announceLeg(){
   const d = nav.pos ? ', ' + fmtDist(distM(nav.pos, leg.pt)) : '';
   say(`Next, stop ${seqLabel(leg.stops[0])}, ${legSpeech(leg)}${d}${pkgSuffix(leg)}`);
 }
-function advance(dir, how){
-  const ni = nav.i + dir;
-  if (ni < 0) { toast('Already at the first stop'); return; }
-  nav.i = ni; nav.approachSaid = false; nav.needFetch = true; navLayer.clearLayers(); nav.steps = []; nav.route = null;
-  if (nav.i >= nav.legs.length) { finishNav(); return; }
+/* --- which legs are done in this run --- */
+function legDone(i){ const l = nav.legs[i]; return !!l && l.stops.every(s => nav.done.has(s.id)); }
+function nextUndone(from){ for (let i = Math.max(0, from); i < nav.legs.length; i++) if (!legDone(i)) return i; return -1; }
+function undoneLeft(){ let n = 0; for (let i = 0; i < nav.legs.length; i++) if (!legDone(i)) n++; return n; }
+
+function goTo(i, how){
+  nav.i = i; nav.approachSaid = false; nav.needFetch = true; navLayer.clearLayers(); nav.steps = []; nav.route = null;
+  if (nav.i < 0 || nav.i >= nav.legs.length) { finishNav(); return; }
   saveNavProgress();
   if (how !== 'quiet') announceLeg();
-  if (nav.pos) { nav.needFetch = false; fetchTurns(); }
+  if (nav.pos && !nav.off) { nav.needFetch = false; fetchTurns(); }
   renderNav();
 }
-function arrive(){
-  const leg = nav.legs[nav.i];
-  timerArrive(nav.i, leg);
+function advance(dir, how){
+  if (dir < 0) { if (nav.i <= 0) { toast('Already at the first stop'); return; } goTo(nav.i - 1, how); return; }
+  const ni = nextUndone(nav.i + 1);
+  if (ni >= 0) { goTo(ni, how); return; }
+  const left = nextUndone(0);           // nothing ahead — anything missed earlier?
+  if (left >= 0 && left !== nav.i) { toast(`${undoneLeft()} stop(s) earlier in the route weren't reached`, 4000); }
+  finishNav();
+}
+function arriveAt(i, outOfOrder){
+  const leg = nav.legs[i];
+  timerArrive(i, leg, outOfOrder);
+  leg.stops.forEach(s => nav.done.add(s.id));
   renderMarkers();                    // grey out what's done
   say('Arrived, ' + (leg.stops.length > 1 && legSameGroup(leg) ? leg.stops[0].group : sayNum(houseNum(leg.stops[0]).split(' ')[0]) || 'stop')
     + (legPkgStops(leg).length ? '. Package here.' : ''));
-  advance(1);
+}
+function arrive(){ const i = nav.i; arriveAt(i, false); nav.thread = null; advance(1); }
+
+/* Reached a stop that isn't the one we were heading to.
+   - A stop just a few ahead: you skipped one or two — carry on from here.
+   - Two out-of-order stops in a row going forward: you've rejoined the route somewhere else — pick up from there.
+   - Otherwise (a one-off early delivery, or going back for a missed one): mark it done and keep the current target. */
+function arriveOutOfOrder(k){
+  arriveAt(k, true);
+  const ahead = k - nav.i;
+  const continuing = nav.thread != null && k > nav.thread && k - nav.thread <= 3;
+  if ((ahead > 0 && ahead <= 3) || continuing) {
+    nav.thread = null;
+    const ni = nextUndone(k + 1);
+    if (ni < 0) { advance(1); return; }
+    say(`Picking up from stop ${seqLabel(nav.legs[k].stops[0])}.`);
+    goTo(ni);
+  } else {
+    nav.thread = k;
+    toast(`#${seqLabel(nav.legs[k].stops[0])} marked done (out of order). Still heading to #${seqLabel(nav.legs[nav.i].stops[0])}.`, 4000);
+    renderNav();
+  }
+}
+/* nearest not-done leg to a point (optionally excluding one) */
+function nearestUndone(cur, except){
+  let best = -1, bd = Infinity;
+  for (let i = 0; i < nav.legs.length; i++) {
+    if (i === except || legDone(i)) continue;
+    const d = distM(cur, nav.legs[i].pt);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return { i: best, d: bd };
+}
+/* off-route = far from every stop AND far from the line connecting stops in order */
+const OFF_STOP_M = 400, OFF_LINE_M = 250;
+function isOffRoute(cur){
+  let nd = Infinity;
+  for (const l of nav.legs) { const d = distM(cur, l.pt); if (d < nd) nd = d; if (nd < OFF_STOP_M) return false; }
+  return !nav.line.length || distToPath(cur, nav.line) > OFF_LINE_M;
 }
 function onNavFix(p){
   if (!nav.active || nav.paused) return;
   const cur = { lat: p.coords.latitude, lng: p.coords.longitude };
+  nav.lastFix = Date.now(); nav.lost = false;
   nav.acc = p.coords.accuracy;
-  if (p.coords.heading != null && !isNaN(p.coords.heading) && p.coords.speed > 1.5) nav.heading = p.coords.heading;
+  const spd = p.coords.speed != null && !isNaN(p.coords.speed) ? p.coords.speed : null;
+  if (p.coords.heading != null && !isNaN(p.coords.heading) && spd > 1.5) nav.heading = p.coords.heading;
   else if (nav.hPos && distM(nav.hPos, cur) > 6) nav.heading = bearing(nav.hPos, cur);
   if (!nav.hPos || distM(nav.hPos, cur) > 6) nav.hPos = cur;
   nav.pos = cur;
   updateUserDot([cur.lat, cur.lng], p.coords.accuracy);
   if (nav.follow) map.setView([cur.lat, cur.lng], Math.max(map.getZoom(), 17), { animate: true });
 
+  // off-route tracking
+  const off = isOffRoute(cur);
+  trackAdd(cur, p.coords.accuracy, off);
+  if (off && !nav.off) {
+    nav.off = { from: Date.now(), lat: cur.lat, lng: cur.lng, d0: run ? run.offDistM || 0 : 0 };
+    navLayer.clearLayers(); nav.steps = []; nav.route = null;
+    say('Off route. I\'ll pick up again when you get back to any stop.');
+  } else if (!off && nav.off) {
+    if (run) { (run.offRoute = run.offRoute || []).push({ from: nav.off.from, to: Date.now(), lat: nav.off.lat, lng: nav.off.lng, distM: Math.round((run.offDistM || 0) - nav.off.d0) }); saveRuns(); }
+    nav.off = null;
+    const n = nearestUndone(cur);       // back on — aim at the nearest stop not done yet if it's close
+    if (n.i >= 0 && n.i !== nav.i && n.d < 300) { say('Back on route.'); goTo(n.i); return; }
+    say('Back on route.'); nav.needFetch = true;
+  }
+
   if (nav.pkg) { renderNav(); return; }    // walking a package — don't auto-advance or count it as driving away
   timerDepartCheck(cur);
+  if (legDone(nav.i)) { const ni = nextUndone(nav.i); if (ni < 0) { advance(1); return; } goTo(ni, 'quiet'); if (!nav.active) return; }
   const leg = nav.legs[nav.i];
   if (!leg) { finishNav(); return; }
   const R = (settings.arriveFt || 80) / 3.28084;
   const d = distM(cur, leg.pt);
-  const next = nav.legs[nav.i + 1];
-  if (d <= R) { arrive(); return; }
-  if (next && distM(cur, next.pt) <= R) {          // passed this one without getting close — move on
-    timerSkip(nav.i, leg);
-    nav.i++; arrive(); return;
-  }
-  if (!nav.approachSaid && d <= 160) { nav.approachSaid = true; say(`In ${fmtDist(d)}, ${legSpeech(leg)}${sideWord(cur, leg.pt)}${pkgSuffix(leg)}`); }
-  if (nav.needFetch) { nav.needFetch = false; fetchTurns(); }
-  updateTurns(cur);
+  if (d <= R) { nav.cand = null; arrive(); return; }
+
+  // any other stop not done yet, close by?
+  const other = nearestUndone(cur, nav.i);
+  if (other.i >= 0 && other.d <= R) {
+    const nx = nextUndone(nav.i + 1);
+    if (other.i === nx) {               // the very next stop: you passed this one without getting close
+      nav.cand = null;
+      timerSkip(nav.i, leg);
+      nav.i = other.i; arrive(); return;
+    }
+    // further away in the sequence: only count it if you actually stop there (slow for 6+ seconds),
+    // so driving past later stops on a shared road doesn't mark them done
+    const slow = spd == null || spd < 2.5;
+    if (slow && nav.cand && nav.cand.i === other.i) {
+      if (Date.now() - nav.cand.since >= 6000) { nav.cand = null; arriveOutOfOrder(other.i); return; }
+    } else if (slow) nav.cand = { i: other.i, since: Date.now() };
+    else nav.cand = null;
+  } else nav.cand = null;
+
+  if (!nav.off && !nav.approachSaid && d <= 160) { nav.approachSaid = true; say(`In ${fmtDist(d)}, ${legSpeech(leg)}${sideWord(cur, leg.pt)}${pkgSuffix(leg)}`); }
+  if (!nav.off && nav.needFetch) { nav.needFetch = false; fetchTurns(); }
+  if (!nav.off) updateTurns(cur);
   renderNav();
 }
+/* GPS watchdog: if no fix arrives for 25 s, restart location */
+setInterval(() => {
+  if (!nav.active || nav.paused) return;
+  if (Date.now() - (nav.lastFix || 0) > 25000) { nav.lost = true; navWatchOn(); nav.lastFix = Date.now() - 15000; renderNav(); }
+}, 10000);
+function closeOffEpisode(){
+  if (nav.off && run) { (run.offRoute = run.offRoute || []).push({ from: nav.off.from, to: Date.now(), lat: nav.off.lat, lng: nav.off.lng, distM: Math.round((run.offDistM || 0) - nav.off.d0) }); saveRuns(); }
+  nav.off = null;
+}
 function pauseNav(){
+  closeOffEpisode(); trk.last = null; trk.win = []; trackFlush();
   nav.paused = true; navWatchOff(); wakeOff();
   try { speechSynthesis.cancel(); } catch(e){}
   timerPause();
@@ -1340,6 +1486,7 @@ function pkgMs(d, r){ return (d.pkg || []).reduce((t, p) => t + activeMs(p.from,
 
 function endNav(){
   if (nav.pkg) pkgToggle();
+  closeOffEpisode(); trk.last = null; trk.win = []; trackFlush();
   navWatchOff(); wakeOff(); try { speechSynthesis.cancel(); } catch(e){}
   if (!nav.paused) timerPause();
   nav.active = false; nav.paused = false; navLayer.clearLayers(); removeUserDot();
@@ -1348,6 +1495,8 @@ function endNav(){
 }
 function finishNav(){
   if (nav.pkg) pkgToggle();
+  closeOffEpisode(); trackFlush();
+  if (run) run.missed = undoneLeft();
   timerFinish();
   renderMarkers();
   say('Route complete. Nice work.');
@@ -1374,7 +1523,9 @@ function renderNav(){
   const turn = st && nav.pos ? `<div class="nv-turn">${st.arrow} ${esc(st.text)} · ${fmtDistShort(distM(nav.pos, st.pt))}</div>` : '';
   const sub = [legSeqText(leg), leg.stops.length === 1 && s.name ? s.name : '', settings.navTo === 'house' && okPt(s.house) ? 'House' : (okPt(s.box) ? 'Mailbox' : 'House')].filter(Boolean).join(' · ');
   el.innerHTML = `
-    <div class="nv-top"><span>Stop ${nav.i + 1} of ${nav.legs.length} · ${esc(s.group || '')}</span><span>${timerClock()}${nav.acc != null ? ' · GPS ±' + Math.round(nav.acc * 3.28) + ' ft' : ''}</span></div>
+    ${nav.lost ? '<div class="nv-paused">📡 GPS signal lost — searching…</div>' : ''}
+    ${nav.off ? `<div class="nv-paused" style="background:#5a1f1f;color:#ffb3b3">↩ Off route for ${fmtDur(Date.now() - nav.off.from)} — I'll pick up when you reach any stop</div>` : ''}
+    <div class="nv-top"><span>${nav.legs.length - undoneLeft()} done · ${undoneLeft()} left · ${esc(s.group || '')}</span><span>${timerClock()}${nav.acc != null ? ' · GPS ±' + Math.round(nav.acc * 3.28) + ' ft' : ''}</span></div>
     <div class="nv-main">
       <div class="nv-arrow"><svg width="30" height="30" viewBox="0 0 24 24" style="transform:rotate(${Math.round(rot)}deg)"><path d="M12 2 L20 21 L12 16.5 L4 21 Z" fill="#3b9cff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
       <div class="nv-txt"><div class="nv-addr">${esc(legTitle(leg))}</div><div class="nv-sub">${esc(sub)}</div></div>
@@ -1441,14 +1592,17 @@ let run = null;
 function timerStart(resume){
   const last = runs[runs.length - 1];
   const now = Date.now();
+  let resumed = false;
   if (resume && last && !last.done && now - last.start < 14 * 3600 * 1000) {
-    run = last;
+    run = last; resumed = true;
     const op = run.pauses.find(p => !p.to); if (op) op.to = now;
   } else {
-    run = { id: uid(), start: now, end: null, done: false, pauses: [], drops: [] };
+    run = { id: uid(), start: now, end: null, done: false, pauses: [], drops: [], offRoute: [], distM: 0, moveMs: 0, offDistM: 0 };
     runs.push(run);
   }
   saveRuns();
+  trackBegin(run, resumed);
+  trackCleanup();
   renderMarkers();
 }
 function activeMs(a, b, r){
@@ -1457,13 +1611,13 @@ function activeMs(a, b, r){
   (r ? r.pauses : []).forEach(p => { const to = p.to || Date.now(); const o = Math.min(b, to) - Math.max(a, p.from); if (o > 0) t -= o; });
   return Math.max(0, t);
 }
-function timerArrive(i, leg){
+function timerArrive(i, leg, oos){
   if (!run) return;
   const now = Date.now();
   const prev = run.drops[run.drops.length - 1];
   if (prev && !prev.depart) prev.depart = now;
   run.drops.push({ ids: leg.stops.map(s => s.id), seq: seqLabel(leg.stops[0]), seqEnd: seqLabel(leg.stops[leg.stops.length - 1]),
-    title: legTitle(leg), group: leg.stops[0].group || '', n: leg.stops.length, lat: leg.pt.lat, lng: leg.pt.lng, arrive: now, depart: null });
+    title: legTitle(leg), group: leg.stops[0].group || '', n: leg.stops.length, lat: leg.pt.lat, lng: leg.pt.lng, arrive: now, depart: null, oos: !!oos });
   run.end = now; saveRuns();
 }
 function timerSkip(i, leg){
@@ -1509,12 +1663,19 @@ function sectionTimes(r){
     out[out.length - 1].end = nx ? nx.arrive : (d.depart || d.arrive);
   });
   out.forEach(s => { s.ms = activeMs(s.start, s.end, r); });
-  return out;
+  // an out-of-order stop splits a section in two — add the pieces back together, keeping route order
+  const merged = [], by = {};
+  out.forEach(s => {
+    const m = by[s.group];
+    if (m) { m.ms += s.ms; m.drops += s.drops; m.pkgN += s.pkgN; m.pkgMs += s.pkgMs; }
+    else { by[s.group] = Object.assign({}, s); merged.push(by[s.group]); }
+  });
+  return merged;
 }
 function runTotal(r){ return activeMs(r.start, r.end || r.start, r); }
 function showTimes(idx){
   const valid = runs.filter(r => r.drops && r.drops.length);
-  let html = `<div class="shead"><h3>📊 Route times</h3><button class="x" data-act="close">×</button></div>`;
+  let html = `<div class="shead"><h3>📊 Route stats</h3><button class="x" data-act="close">×</button></div>`;
   if (!valid.length) {
     html += `<p class="stat">No timed runs yet. Times are recorded automatically while 🧭 route guidance is running — start it from the ⋯ menu or a stop's page.</p>`;
     openSheet('times', html); return;
@@ -1534,12 +1695,16 @@ function showTimes(idx){
     ${(() => { const np = r.drops.reduce((n, d) => n + (d.pkg || []).length, 0); const pm = r.drops.reduce((t, d) => t + pkgMs(d, r), 0);
       return np ? `<div class="stat">📦 ${np} package${np > 1 ? 's' : ''} · ${fmtDur(pm)} total · ${fmtDur(pm / np)} each on average · route without packages: ${fmtDur(total - pm)}</div>` : '<div class="stat">📦 No packages logged — tap 📦 during guidance when you walk one up.</div>'; })()}
     <div class="stat">Paused time is not counted.</div></div>`;
+  html += statsGrid(r, total);
+  html += `<div class="row"><button class="b primary" data-act="showpath" data-run="${runs.indexOf(r)}">🗺 Show my path on the map</button></div>`;
+  html += `<h3 style="margin:16px 0 0;font-size:16px">Total time, last ${Math.min(14, valid.length)} runs</h3>${trendChart(valid.slice(-14), r)}`;
   // sections
   const secs = sectionTimes(r);
   const hist = {};
   others.forEach(x => sectionTimes(x).forEach(s => { (hist[s.group] = hist[s.group] || []).push(s.ms); }));
   const prevSecs = prev ? Object.fromEntries(sectionTimes(prev).map(s => [s.group, s.ms])) : {};
-  html += `<h3 style="margin:16px 0 0;font-size:16px">Sections</h3><table class="tt"><tr><th>Section</th><th class="r">Time</th><th class="r">vs last</th><th class="r">Best</th></tr>`;
+  html += `<h3 style="margin:16px 0 0;font-size:16px">Time per section</h3>${sectionChart(secs, hist)}`;
+  html += `<table class="tt"><tr><th>Section</th><th class="r">Time</th><th class="r">vs last</th><th class="r">Best</th></tr>`;
   secs.forEach(s => {
     const h = hist[s.group] || [];
     const best = h.length ? Math.min(...h) : null;
@@ -1565,6 +1730,118 @@ function showTimes(idx){
     <div class="row"><button class="b danger" data-act="delrun" data-run="${runs.indexOf(r)}">Delete this run</button></div>`;
   openSheet('times', html);
 }
+/* ----- stats tiles & charts ----- */
+const MPH = 2.23694;
+function statsGrid(r, total){
+  const has = r.distM != null;
+  const mi = has ? r.distM / 1609.34 : null;
+  const drive = has ? Math.min(r.moveMs || 0, total) : null;
+  const stopped = has ? Math.max(0, total - drive) : null;
+  const avgMove = has && r.moveMs > 60000 ? (r.distM / (r.moveMs / 1000)) * MPH : null;
+  const avgAll = has && total > 60000 ? (r.distM / (total / 1000)) * MPH : null;
+  const top = r.maxMps ? r.maxMps * MPH : null;
+  const dph = total > 60000 ? r.drops.length / (total / 3600000) : null;
+  const offs = r.offRoute || [];
+  const offMs = offs.reduce((t, o) => t + activeMs(o.from, o.to, r), 0);
+  const oos = r.drops.filter(d => d.oos).length;
+  const tile = (k, v, sub) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div>${sub ? `<div class="s">${sub}</div>` : ''}</div>`;
+  const pct = (a) => total ? Math.round(100 * a / total) + '%' : '';
+  let h = `<div class="sg">`;
+  h += tile('Miles driven', mi != null ? mi.toFixed(1) : '–');
+  h += tile('Drops per hour', dph != null ? dph.toFixed(0) : '–', r.drops.length + ' drops');
+  h += tile('Driving', drive != null ? fmtDur(drive) : '–', drive != null ? pct(drive) + ' of the run' : '');
+  h += tile('Stopped', stopped != null ? fmtDur(stopped) : '–', stopped != null ? pct(stopped) + ' — at boxes, packages, traffic' : '');
+  h += tile('Avg speed driving', avgMove != null ? avgMove.toFixed(0) + ' mph' : '–', avgAll != null ? avgAll.toFixed(0) + ' mph counting stops' : '');
+  h += tile('Top speed', top != null ? top.toFixed(0) + ' mph' : '–', 'GPS estimate');
+  h += tile('Off route', offs.length ? offs.length + '×' : '0', offs.length ? fmtDur(offMs) + ' · ' + ((r.offDistM || 0) / 1609.34).toFixed(1) + ' mi' : 'stayed on route');
+  h += tile('Out of order', String(oos), r.missed != null ? r.missed + ' stop' + (r.missed === 1 ? '' : 's') + ' missed' : (r.done ? '' : 'run not finished'));
+  h += `</div>`;
+  if (!has) h += `<p class="hint">Miles, speeds and driving time are recorded from this version on.</p>`;
+  return h;
+}
+function shortDate(t){ const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate(); }
+/* vertical bars: total time per run (single series). Tap a bar for its value. */
+function trendChart(list, cur){
+  if (list.length < 2) return '<p class="hint">The trend shows after your second run.</p>';
+  const W = 340, H = 150, top = 18, base = 122, left = 6, gap = 2;
+  const vals = list.map(runTotal), max = Math.max(...vals);
+  const bw = (W - left * 2) / list.length;
+  const bestV = Math.min(...list.filter(x => x.done).map(runTotal).concat([Infinity]));
+  let s = `<svg class="ch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Total time per run">`;
+  s += `<line x1="0" x2="${W}" y1="${base + .5}" y2="${base + .5}" stroke="var(--border)"/>`;
+  list.forEach((x, k) => {
+    const v = vals[k], h = Math.max(2, (base - top) * v / max);
+    const xx = left + k * bw + gap / 2, w = Math.max(3, bw - gap);
+    const isCur = x === cur, isBest = x.done && v === bestV;
+    const tip = `${new Date(x.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}: ${fmtDur(v)}${x.done ? '' : ' (unfinished)'}${isBest ? ' — best' : ''}`;
+    s += `<g data-tip="${esc(tip)}"><rect x="${xx - 1}" y="${top - 14}" width="${w + 2}" height="${base - top + 30}" fill="transparent"/>
+      <path d="${barPath(xx, base - h, w, h)}" fill="var(--accent)" opacity="${isCur ? 1 : .5}"/></g>`;
+    if (isCur || isBest) s += `<text x="${xx + w / 2}" y="${base - h - 4}" text-anchor="middle" class="ctx">${fmtDur(v)}${isBest && !isCur ? ' ★' : ''}</text>`;
+    if (list.length <= 8 || k % Math.ceil(list.length / 7) === 0 || isCur) s += `<text x="${xx + w / 2}" y="${base + 14}" text-anchor="middle" class="ctm">${shortDate(x.start)}</text>`;
+  });
+  s += `</svg><div class="hint">Brighter bar = the run shown above · ★ = your best finished run · tap a bar for details</div>`;
+  return s;
+}
+/* rounded only at the data end (top) */
+function barPath(x, y, w, h){ const r = Math.min(4, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+/* horizontal bars: time per section in route order, with a tick at your best for that section */
+function sectionChart(secs, hist){
+  if (!secs.length) return '';
+  const W = 340, rowH = 24, labW = 118, valW = 52, top = 4;
+  const barMax = W - labW - valW - 6;
+  const max = Math.max(...secs.map(s => s.ms), 1);
+  const H = top + secs.length * rowH + 4;
+  let s = `<svg class="ch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Time per section">`;
+  secs.forEach((x, k) => {
+    const y = top + k * rowH, w = Math.max(2, barMax * x.ms / max);
+    const h = hist[x.group] || [];
+    const best = h.length ? Math.min(...h, x.ms) : null;
+    const name = x.group.length > 17 ? x.group.slice(0, 16) + '…' : x.group;
+    const tip = `${x.group}: ${fmtDur(x.ms)} · ${x.drops} drop${x.drops > 1 ? 's' : ''}${x.pkgN ? ` · ${x.pkgN} package${x.pkgN > 1 ? 's' : ''}` : ''}${best != null ? ' · best ' + fmtDur(best) : ''}`;
+    s += `<g data-tip="${esc(tip)}"><rect x="0" y="${y}" width="${W}" height="${rowH}" fill="transparent"/>
+      <text x="${labW - 6}" y="${y + 16}" text-anchor="end" class="ctm">${esc(name)}</text>
+      <path d="${hbarPath(labW, y + 5, w, rowH - 10)}" fill="var(--accent)"/>`;
+    if (best != null && best < x.ms) { const bx = labW + barMax * best / max; s += `<line x1="${bx}" x2="${bx}" y1="${y + 2}" y2="${y + rowH - 2}" stroke="var(--text)" stroke-width="2"/>`; }
+    s += `<text x="${labW + w + 6}" y="${y + 16}" class="ctx">${fmtDur(x.ms)}</text></g>`;
+  });
+  s += `</svg><div class="hint">Bars in route order · white tick = your best time for that section · tap a bar for details</div>`;
+  return s;
+}
+function hbarPath(x, y, w, h){ const r = Math.min(4, h / 2, w); return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`; }
+
+/* ----- your driven path on the map ----- */
+const pathLayer = L.layerGroup().addTo(map);
+let pathShown = false;
+async function showPath(k){
+  const r = runs[k]; if (!r) return;
+  let pts = [];
+  try {
+    if (run && r === run) pts = trk.pts.slice();
+    else { const rec = await trackGet(r.id); pts = rec ? rec.pts : []; }
+  } catch(e){}
+  if (pts.length < 2) { toast('No path recorded for that run. Paths are recorded from this version on, while guidance is running.', 4500); return; }
+  pathLayer.clearLayers();
+  // split into runs of on-route (blue) and off-route (red); break the line across pauses or GPS gaps
+  let seg = [pts[0]], segOff = pts[0][3];
+  const flush = () => { if (seg.length > 1) L.polyline(seg.map(p => [p[1], p[2]]), { color: segOff ? '#ff5a5a' : '#3b9cff', weight: 4, opacity: .85, interactive: false }).addTo(pathLayer); };
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const gap = b[0] - a[0] > 300 || distM({ lat: a[1], lng: a[2] }, { lat: b[1], lng: b[2] }) > 2000;
+    if (gap) { flush(); seg = [b]; segOff = b[3]; continue; }
+    seg.push(b);
+    if (b[3] !== segOff) { flush(); seg = [b]; segOff = b[3]; }
+  }
+  flush();
+  (r.offRoute || []).forEach(o => L.circleMarker([o.lat, o.lng], { radius: 7, color: '#fff', weight: 2, fillColor: '#ff5a5a', fillOpacity: 1, interactive: false }).addTo(pathLayer));
+  closeSheet();
+  map.fitBounds(pts.map(p => [p[1], p[2]]), { padding: [40, 40] });
+  pathShown = true;
+  $('bannerText').textContent = `Path ${shortDate(r.start)} · ${((r.distM || 0) / 1609.34).toFixed(1)} mi · blue on route, red off route`;
+  $('bannerCancel').textContent = 'Hide';
+  $('banner').style.display = 'flex';
+}
+function hidePath(){ pathLayer.clearLayers(); pathShown = false; $('banner').style.display = 'none'; $('bannerCancel').textContent = 'Cancel'; }
+
 function runsCSV(){
   const rows = [['run_date','run_done','seq','seq_end','section','drop','boxes','arrive','depart','stopped_seconds','packages','package_seconds']];
   runs.forEach(r => r.drops.forEach(d => rows.push([new Date(r.start).toISOString().slice(0,10), r.done ? 'yes' : 'no', d.seq, d.seqEnd, d.group, d.title, d.n,
@@ -1818,7 +2095,7 @@ function showData(){
   const html = `
     <div class="shead"><h3>Data &amp; settings</h3><button class="x" data-act="close">×</button></div>
     <div class="stat">${stops.length} stops · ${nb} mailboxes · ${nh} houses · ${spaces.length} space labels · ${np} photos</div>
-    <div class="row"><button class="b primary" data-act="check">🚐 Vehicle check${checks.draft ? ' (in progress)' : ''}</button></div>
+    <div class="row"><button class="b primary" data-act="check">🚐 Vehicle check${checks.draft ? ' (in progress)' : ''}</button><button class="b" data-act="help">❓ How to use</button></div>
 
     <div class="locbox"><div class="t">⚡ Fill in pins faster</div>
       <p class="hint"><b>Quick place:</b> drive the route once and tap one button at each mailbox — it fills the pin from GPS and moves to the next stop. Cluster boxes fill the whole section at once.</p>
@@ -1844,7 +2121,7 @@ function showData(){
       <label class="chk"><input type="checkbox" id="s-names"${settings.navNames ? ' checked' : ''}> Say customer names</label>
       <label class="chk"><input type="checkbox" id="s-turns"${settings.navTurns ? ' checked' : ''}> Street-by-street turns (needs reception)</label>
       <p class="hint">Stops without a pin are skipped. Keep the app open on screen while driving — iPhone stops location for web apps when the screen locks or you switch apps.</p>
-      <div class="row"><button class="b" data-act="times">📊 Route times</button></div>
+      <div class="row"><button class="b" data-act="times">📊 Route stats &amp; charts</button></div>
     </div>
 
     <div class="locbox"><div class="t">🏷 Space numbers</div>
@@ -2012,6 +2289,8 @@ function toggleLocate(){
 
 /* ================= events ================= */
 $('sheet').addEventListener('click', ev => {
+  const tip = ev.target.closest('[data-tip]');
+  if (tip) { toast(tip.dataset.tip, 3500); return; }
   const th = ev.target.closest('img.thumb');
   if (th) {
     let list;
@@ -2073,6 +2352,8 @@ $('sheet').addEventListener('click', ev => {
     case 'navstart': { const v = parseFloat(($('s-navstart') || {}).value); startNav({ seq: isFinite(v) ? v : 1 }); break; }
     case 'navresume': if (settings.navPos) startNav({ id: settings.navPos.id, resume: true }); break;
     case 'times': showTimes(); break;
+    case 'showpath': showPath(+b.dataset.run); break;
+    case 'help': if (nav.active) { toast('Stop guidance first (✕) — your place is saved'); break; } trackFlush(); location.href = 'help.html'; break;
     case 'expruns': deliver(`route-times-${stamp()}.csv`, runsCSV(), 'text/csv'); break;
     case 'delrun': {
       const k = +b.dataset.run;
@@ -2209,7 +2490,7 @@ $('btnList').addEventListener('click', () => { if (editing) { toast('Finish or c
 $('btnAdd').addEventListener('click', () => { if (editing) return; if (labelMode) setLabelMode(false); startForm(null); });
 $('btnLocate').addEventListener('click', toggleLocate);
 $('btnData').addEventListener('click', () => { if (editing) { toast('Finish or cancel the edit first'); return; } sheetMode === 'data' ? closeSheet() : showData(); });
-$('bannerCancel').addEventListener('click', () => { if (auto.running) { auto.cancel = true; return; } setTap(null); });
+$('bannerCancel').addEventListener('click', () => { if (auto.running) { auto.cancel = true; return; } if (pathShown) { hidePath(); return; } setTap(null); });
 
 /* ================= offline support ================= */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

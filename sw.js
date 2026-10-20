@@ -3,13 +3,14 @@
    and keeps a copy of every map tile you have viewed so those areas still show offline.
    Tiles are only cached as you view them (no bulk downloading — OpenStreetMap's and
    Esri's tile terms don't allow bulk pre-downloading). */
-const APP_CACHE = 'routemap-app-v4';
+const APP_CACHE = 'routemap-app-v5';
 const TILE_CACHE = 'routemap-tiles-v1';
 const MAX_TILES = 6000;   // roughly 100–150 MB at most; oldest tiles are dropped first
 
 const APP_FILES = [
   './',
   './route-map.html',
+  './help.html',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
