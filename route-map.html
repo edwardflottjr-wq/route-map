@@ -98,7 +98,16 @@
   #toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 24px);
     z-index:2000;background:#000d;color:#fff;padding:10px 14px;border-radius:10px;font-size:14px;
     max-width:90vw;text-align:center;display:none}
-  .pinwrap{width:120px;height:30px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .pinwrap{width:120px;height:30px;display:flex;align-items:center;justify-content:center;pointer-events:none;
+    transform:scale(var(--ps,1));transform-origin:center;transition:transform .15s}
+  /* the next stop during guidance stays big and pulses, whatever the zoom */
+  .pinwrap.nx{transform:scale(1.3)}
+  .pinwrap.nx .pin,.pinwrap.nx .hpin{animation:nxpulse 1.6s ease-out infinite;outline:3px solid #ffd60a;outline-offset:1px}
+  @keyframes nxpulse{0%{box-shadow:0 0 0 0 rgba(255,214,10,.85)}70%{box-shadow:0 0 0 14px rgba(255,214,10,0)}100%{box-shadow:0 0 0 0 rgba(255,214,10,0)}}
+  /* zoomed far out: pins become small dots with no text */
+  .tiny .pinwrap:not(.nx) .pin,.tiny .pinwrap:not(.nx) .hpin{font-size:0;min-width:0;width:16px;height:16px;padding:0;border-width:2px}
+  .tiny .pinwrap:not(.nx) .pkflag{font-size:10px;top:-8px;right:-8px}
+  .tiny .pinwrap:not(.nx) .hs{display:none}
   .pin,.hpin{pointer-events:auto}
   .pin{display:flex;align-items:center;justify-content:center;border-radius:15px;border:2px solid #fff;
     font:700 11px/1 -apple-system,system-ui,sans-serif;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.5);min-width:30px;height:30px;padding:0 5px;white-space:nowrap}
@@ -624,7 +633,25 @@ L.control.layers({ 'Street': street, 'Satellite': sat },
   { 'Mailboxes': boxLayer, 'Houses / packages': houseLayer, 'Box ↔ house links': linkLayer, 'Space numbers': spaceLayer },
   { position: 'topright' }).addTo(map);
 L.control.zoom({ position: 'topright' }).addTo(map);
-function zoomClass(){ map.getContainer().classList.toggle('lowz', map.getZoom() < 17); }
+/* Pins, labels and lines scale with zoom so the map isn't buried when zoomed out. */
+function pinScale(z){ return z >= 19 ? 1 : z >= 18 ? .9 : z >= 17 ? .78 : z >= 16 ? .64 : z >= 15 ? .52 : .45; }
+function lineW(base, z){ return Math.max(1, base * (z >= 18 ? 1 : z >= 17 ? .8 : z >= 16 ? .6 : z >= 15 ? .45 : .35)); }
+function zoomClass(){
+  const z = map.getZoom(), el = map.getContainer();
+  el.classList.toggle('lowz', z < 17);
+  el.classList.toggle('tiny', z < 15);
+  el.style.setProperty('--ps', pinScale(z));
+  restyleLines();
+}
+function restyleLines(){
+  const z = map.getZoom();
+  try {
+    if (routeLine) routeLine.setStyle({ weight: lineW(3, z), opacity: z >= 16 ? .7 : .45 });
+    linkLayer.eachLayer(l => l.setStyle({ weight: lineW(l.options.baseW || 1.5, z), opacity: z >= 17 ? .75 : 0 }));
+    navLayer.eachLayer(l => l.setStyle && l.setStyle({ weight: lineW(6, z) }));
+    if (typeof pathLayer !== 'undefined') pathLayer.eachLayer(l => l.setStyle && l.options.baseW && l.setStyle({ weight: lineW(l.options.baseW, z) }));
+  } catch(e){}
+}
 map.on('zoomend', zoomClass);
 
 let routeLine = null;
@@ -645,13 +672,13 @@ function houseLabelHTML(s){
   if (settings.labels === 'num') return esc(n);
   return `<span class="hs">${esc(seqLabel(s))}·</span>${esc(n)}`;
 }
-function boxIcon(s, sel, done, pk){
+function boxIcon(s, sel, done, pk, nx){
   return L.divIcon({ className: '', iconSize: [120,30], iconAnchor: [60,15],
-    html: `<div class="pinwrap"><div class="pin t-${normType(s.type)}${sel ? ' sel' : ''}${done ? ' done' : ''}${pk ? ' pk' : ''}">${esc(boxLabel(s))}${pk ? '<span class="pkflag">📦</span>' : ''}</div></div>` });
+    html: `<div class="pinwrap${nx ? ' nx' : ''}"><div class="pin t-${normType(s.type)}${sel ? ' sel' : ''}${done ? ' done' : ''}${pk ? ' pk' : ''}">${esc(boxLabel(s))}${pk ? '<span class="pkflag">📦</span>' : ''}</div></div>` });
 }
-function houseIcon(s, sel, done, pk){
+function houseIcon(s, sel, done, pk, nx){
   return L.divIcon({ className: '', iconSize: [120,30], iconAnchor: [60,15],
-    html: `<div class="pinwrap"><div class="hpin${sel ? ' sel' : ''}${done ? ' done' : ''}${s.houseApprox ? ' approx' : ''}${pk ? ' pk' : ''}">${houseLabelHTML(s)}${pk ? '<span class="pkflag">📦</span>' : ''}</div></div>` });
+    html: `<div class="pinwrap${nx ? ' nx' : ''}"><div class="hpin${sel ? ' sel' : ''}${done ? ' done' : ''}${s.houseApprox ? ' approx' : ''}${pk ? ' pk' : ''}">${houseLabelHTML(s)}${pk ? '<span class="pkflag">📦</span>' : ''}</div></div>` });
 }
 function updatePkgCount(){
   const n = todayPkgs().length, el = $('pkgCount');
@@ -672,16 +699,19 @@ function renderMarkers(){
   boxLayer.clearLayers(); houseLayer.clearLayers(); linkLayer.clearLayers();
   const done = doneIds();
   const pks = new Set(todayPkgs());
+  const nxt = new Set(nav.active && nav.legs[nav.i] ? nav.legs[nav.i].stops.map(x => x.id) : []);
+  const z0 = map.getZoom();
   updatePkgCount();
   stops.forEach(s => {
     if (editing && editing.id === s.id) return;
     const sel = s.id === selectedId, dn = done.has(s.id), pk = pks.has(s.id) && !dn;
     const click = () => { if (!tapTarget && !editing && !labelMode) showDetail(s.id); };
-    const z = sel ? 900 : pk ? 600 : dn ? -200 : 0;
-    if (okPt(s.box)) L.marker([s.box.lat, s.box.lng], { icon: boxIcon(s, sel, dn, pk), zIndexOffset: z }).on('click', click).addTo(boxLayer);
-    if (okPt(s.house)) L.marker([s.house.lat, s.house.lng], { icon: houseIcon(s, sel, dn, pk), zIndexOffset: z }).on('click', click).addTo(houseLayer);
-    if (okPt(s.box) && okPt(s.house)) L.polyline([[s.box.lat, s.box.lng], [s.house.lat, s.house.lng]],
-      { color: sel ? '#ffd60a' : '#ffffff', weight: sel ? 3 : 1.5, opacity: .75, dashArray: '3 5', interactive: false }).addTo(linkLayer);
+    const nx = nxt.has(s.id);
+    const z = nx ? 1500 : sel ? 900 : pk ? 600 : dn ? -200 : 0;
+    if (okPt(s.box)) L.marker([s.box.lat, s.box.lng], { icon: boxIcon(s, sel, dn, pk, nx), zIndexOffset: z }).on('click', click).addTo(boxLayer);
+    if (okPt(s.house)) L.marker([s.house.lat, s.house.lng], { icon: houseIcon(s, sel, dn, pk, nx), zIndexOffset: z }).on('click', click).addTo(houseLayer);
+    if (okPt(s.box) && okPt(s.house)) { const bw = sel || nx ? 3 : 1.5; L.polyline([[s.box.lat, s.box.lng], [s.house.lat, s.house.lng]],
+      { color: sel || nx ? '#ffd60a' : '#ffffff', weight: lineW(bw, z0), baseW: bw, opacity: z0 >= 17 || nx ? .75 : 0, dashArray: '3 5', interactive: false }).addTo(linkLayer); }
   });
   renderLine();
 }
@@ -689,7 +719,8 @@ function renderLine(){
   if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
   if (!settings.showLine) return;
   const pts = sorted(stops.filter(s => anyPt(s) && isFinite(seqNum(s)))).map(s => { const p = anyPt(s); return [p.lat, p.lng]; });
-  if (pts.length > 1) routeLine = L.polyline(pts, { color: '#ffd60a', weight: 3, opacity: .7, interactive: false }).addTo(map);
+  const z = map.getZoom();
+  if (pts.length > 1) routeLine = L.polyline(pts, { color: '#ffd60a', weight: lineW(3, z), opacity: z >= 16 ? .7 : .45, interactive: false }).addTo(map);
 }
 function fitAll(){
   const pts = [];
@@ -1230,7 +1261,7 @@ async function fetchTurns(){
     nav.route = rt.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
     nav.steps = rt.legs[0].steps.map(st => ({ text: stepText(st), arrow: stepArrow(st),
       pt: { lat: st.maneuver.location[1], lng: st.maneuver.location[0] }, done: false, pre: false, said: false })).filter(s => s.text);
-    L.polyline(nav.route.map(p => [p.lat, p.lng]), { color: '#3b9cff', weight: 6, opacity: .55, interactive: false }).addTo(navLayer);
+    L.polyline(nav.route.map(p => [p.lat, p.lng]), { color: '#3b9cff', weight: lineW(6, map.getZoom()), opacity: .55, interactive: false }).addTo(navLayer);
   } catch(e) {
     toast('Street turns unavailable right now — still guiding stop to stop', 3000);
   } finally { nav.fetching = false; renderNav(); }
@@ -1287,7 +1318,7 @@ function startNav(o){
   if (legDone(nav.i)) { const ni = nextUndone(nav.i); nav.i = ni >= 0 ? ni : nextUndone(0); if (nav.i < 0) { nav.active = false; toast('Every placed stop is already done in this run'); return; } }
   say('Starting route.');            // first speech must happen during the tap so iPhone allows it
   navWatchOn(); wakeOn();
-  saveNavProgress(); announceLeg(); renderNav();
+  saveNavProgress(); renderMarkers(); announceLeg(); renderNav();
   const skipped = stops.length - legs.reduce((n, l) => n + l.stops.length, 0);
   if (skipped > 0) toast(`${skipped} stop${skipped > 1 ? 's' : ''} without a pin will be skipped`, 3500);
 }
@@ -1310,6 +1341,7 @@ function goTo(i, how){
   nav.i = i; nav.approachSaid = false; nav.needFetch = true; navLayer.clearLayers(); nav.steps = []; nav.route = null;
   if (nav.i < 0 || nav.i >= nav.legs.length) { finishNav(); return; }
   saveNavProgress();
+  renderMarkers();                    // the new next stop gets the big pulsing pin
   if (how !== 'quiet') announceLeg();
   if (nav.pos && !nav.off) { nav.needFetch = false; fetchTurns(); }
   renderNav();
@@ -1491,6 +1523,7 @@ function endNav(){
   if (!nav.paused) timerPause();
   nav.active = false; nav.paused = false; navLayer.clearLayers(); removeUserDot();
   $('navbar').style.display = 'none';
+  renderMarkers();
   if (settings.navPos) toast(`Stopped at #${settings.navPos.seq}. Resume from the ⋯ menu.`, 4000);
 }
 function finishNav(){
@@ -1823,7 +1856,7 @@ async function showPath(k){
   pathLayer.clearLayers();
   // split into runs of on-route (blue) and off-route (red); break the line across pauses or GPS gaps
   let seg = [pts[0]], segOff = pts[0][3];
-  const flush = () => { if (seg.length > 1) L.polyline(seg.map(p => [p[1], p[2]]), { color: segOff ? '#ff5a5a' : '#3b9cff', weight: 4, opacity: .85, interactive: false }).addTo(pathLayer); };
+  const flush = () => { if (seg.length > 1) L.polyline(seg.map(p => [p[1], p[2]]), { color: segOff ? '#ff5a5a' : '#3b9cff', weight: lineW(4, map.getZoom()), baseW: 4, opacity: .85, interactive: false }).addTo(pathLayer); };
   for (let i = 1; i < pts.length; i++) {
     const a = pts[i - 1], b = pts[i];
     const gap = b[0] - a[0] > 300 || distM({ lat: a[1], lng: a[2] }, { lat: b[1], lng: b[2] }) > 2000;
